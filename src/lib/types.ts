@@ -12,16 +12,26 @@ export type Profile = {
   teamName: string | null
 }
 
-export type EntryStatus = 'work' | 'vacation' | 'off' | 'annual' | 'unpaid' | 'family_event' | 'meeting' | 'other'
+export type EntryStatus =
+  | 'work'
+  | 'vacation'
+  | 'off'
+  | 'annual'
+  | 'unpaid'
+  | 'family_event'
+  | 'meeting'
+  | 'other'
+  | 'field_work'
 
 export const ENTRY_CATEGORIES: { value: EntryStatus; label: string; color: string; dot: string }[] = [
-  { value: 'off', label: '휴무', color: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-500' },
-  { value: 'annual', label: '연차', color: 'bg-blue-50 text-blue-700 border-blue-300', dot: 'bg-blue-500' },
-  { value: 'vacation', label: '휴가', color: 'bg-teal-50 text-teal-700 border-teal-300', dot: 'bg-teal-500' },
+  { value: 'off', label: '휴무', color: 'bg-rose-50 text-rose-700 border-rose-300', dot: 'bg-rose-500' },
+  { value: 'annual', label: '연차', color: 'bg-emerald-50 text-emerald-700 border-emerald-300', dot: 'bg-emerald-500' },
+  { value: 'vacation', label: '휴가', color: 'bg-sky-50 text-sky-700 border-sky-300', dot: 'bg-sky-500' },
+  { value: 'meeting', label: '회의', color: 'bg-violet-50 text-violet-700 border-violet-300', dot: 'bg-violet-500' },
+  { value: 'field_work', label: '외근', color: 'bg-amber-50 text-amber-800 border-amber-300', dot: 'bg-amber-500' },
   { value: 'unpaid', label: '무급', color: 'bg-zinc-100 text-zinc-700 border-zinc-300', dot: 'bg-zinc-500' },
   { value: 'family_event', label: '경조사', color: 'bg-purple-50 text-purple-700 border-purple-300', dot: 'bg-purple-500' },
-  { value: 'meeting', label: '회의', color: 'bg-amber-50 text-amber-800 border-amber-300', dot: 'bg-amber-500' },
-  { value: 'other', label: '기타', color: 'bg-rose-50 text-rose-700 border-rose-300', dot: 'bg-rose-500' },
+  { value: 'other', label: '기타', color: 'bg-slate-100 text-slate-700 border-slate-300', dot: 'bg-slate-500' },
 ]
 
 export function categoryOf(status: string) {
