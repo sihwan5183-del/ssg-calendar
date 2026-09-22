@@ -26,3 +26,7 @@ export const WEEKDAY_LABELS = ['월', '화', '수', '목', '금', '토', '일']
 export function formatYm(year: number, month: number) {
   return `${year}년 ${month + 1}월`
 }
+
+export function fmtTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
+}
