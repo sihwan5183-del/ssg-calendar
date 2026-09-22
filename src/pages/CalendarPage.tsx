@@ -1,15 +1,22 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
-import { getMonthGrid, WEEKDAY_LABELS, formatYm, toDateStr, todayStr } from '../lib/dateUtils'
-import { categoryOf, type Notice, type Profile, type ScheduleEntry, type Store, type Team } from '../lib/types'
+import { getMonthGrid, WEEKDAY_LABELS, formatYm, toDateStr, todayStr, fmtTime } from '../lib/dateUtils'
+import { ENTRY_CATEGORIES, categoryOf, type Notice, type Profile, type ScheduleEntry, type Store, type Team, type EntryStatus } from '../lib/types'
 import DayDetailModal from '../components/DayDetailModal'
 import NoticeModal from '../components/NoticeModal'
+import Sidebar, { type ViewKey } from '../components/Sidebar'
+import RightPanel from '../components/RightPanel'
+import MembersView from '../components/MembersView'
+import NoticesView from '../components/NoticesView'
+import AdminView from '../components/AdminView'
 import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/push'
-import { ChevronLeft, ChevronRight, LogOut, Bell, BellOff, Megaphone } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LogOut, Bell, BellOff, CalendarDays, Search, ChevronDown, Menu } from 'lucide-react'
+
+const LEGEND_CATEGORIES = ENTRY_CATEGORIES.slice(0, 5) // 휴무/연차/휴가/회의/외근
 
 export default function CalendarPage() {
-  const { profile, signOut } = useAuth()
+  const { profile, signOut, isManager } = useAuth()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -19,8 +26,14 @@ export default function CalendarPage() {
   const [stores, setStores] = useState<Store[]>([])
   const [roster, setRoster] = useState<Profile[]>([])
   const [filterTeamId, setFilterTeamId] = useState<string>('all')
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState<EntryStatus | 'all'>('all')
+  const [selectedDate, setSelectedDate] = useState<string>(todayStr())
+  const [showDayModal, setShowDayModal] = useState(false)
   const [noticeDate, setNoticeDate] = useState<string | null>(null)
+  const [activeView, setActiveView] = useState<ViewKey>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [pushOn, setPushOn] = useState(false)
   const [pushBusy, setPushBusy] = useState(false)
 
@@ -113,15 +126,21 @@ export default function CalendarPage() {
     const map = new Map<string, ScheduleEntry[]>()
     for (const e of entries) {
       if (filterTeamId !== 'all' && e.team_id !== filterTeamId) continue
+      if (filterStatus !== 'all' && e.status !== filterStatus) continue
+      if (activeView === 'mine' && e.profile_id !== profile?.id) continue
+      if (searchQuery && !(e.profile_name ?? '').includes(searchQuery)) continue
       if (!map.has(e.entry_date)) map.set(e.entry_date, [])
       map.get(e.entry_date)!.push(e)
     }
     return map
-  }, [entries, filterTeamId])
+  }, [entries, filterTeamId, filterStatus, activeView, profile?.id, searchQuery])
 
   const noticesForDate = useCallback(
-    (dateStr: string) => notices.filter((n) => n.start_date <= dateStr && (!n.end_date || n.end_date >= dateStr)),
-    [notices],
+    (dateStr: string) => {
+      const list = notices.filter((n) => n.start_date <= dateStr && (!n.end_date || n.end_date >= dateStr))
+      return searchQuery ? list.filter((n) => n.title.includes(searchQuery) || n.content.includes(searchQuery)) : list
+    },
+    [notices, searchQuery],
   )
 
   const goPrevMonth = () => {
@@ -133,6 +152,12 @@ export default function CalendarPage() {
     const d = new Date(year, month + 1, 1)
     setYear(d.getFullYear())
     setMonth(d.getMonth())
+  }
+  const goToday = () => {
+    const t = new Date()
+    setYear(t.getFullYear())
+    setMonth(t.getMonth())
+    setSelectedDate(todayStr())
   }
 
   const togglePush = async () => {
@@ -148,112 +173,257 @@ export default function CalendarPage() {
   }
 
   const today = todayStr()
+  const selectedEntries = entries.filter((e) => e.entry_date === selectedDate)
+  const selectedNotices = noticesForDate(selectedDate)
+  const todayNotices = noticesForDate(today)
+  const badgeCount = todayNotices.filter((n) => n.meeting_at || n.is_important).length
+  const monthLabel = formatYm(year, month)
+
+  const NavContent = (
+    <Sidebar
+      active={activeView}
+      onChange={(v) => {
+        setActiveView(v)
+        setMobileNavOpen(false)
+      }}
+      isManager={isManager}
+    />
+  )
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-10">
-      <header className="sticky top-0 z-10 border-b border-gray-100 bg-white/95 backdrop-blur px-4 py-3">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <div>
-            <p className="text-xs text-gray-400">{profile?.teamName ?? '전체'}</p>
-            <p className="text-sm font-semibold text-gray-800">{profile?.name}님</p>
+    <div className="flex h-screen flex-col bg-gray-50">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 sm:px-6">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setMobileNavOpen(true)} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-50 lg:hidden">
+            <Menu size={20} />
+          </button>
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
+            <CalendarDays size={19} />
+          </span>
+          <div className="hidden sm:block">
+            <p className="text-base font-bold leading-tight text-gray-900">사내 팀 캘린더</p>
+            <p className="text-[11px] leading-tight text-gray-400">함께 만드는 더 좋은 오늘</p>
           </div>
-          <div className="flex items-center gap-1.5">
+        </div>
+
+        <div className="relative mx-3 hidden max-w-md flex-1 sm:block">
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="직원 또는 일정 검색"
+            className="w-full rounded-full border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:border-brand-400 focus:bg-white focus:outline-none"
+          />
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button onClick={() => setActiveView('notices')} className="relative rounded-full p-2 text-gray-500 hover:bg-gray-50">
+            <Bell size={19} />
+            {badgeCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+                {badgeCount}
+              </span>
+            )}
+          </button>
+          <div className="relative">
             <button
-              onClick={togglePush}
-              disabled={pushBusy}
-              title={pushOn ? '푸시 알림 끄기' : '푸시 알림 켜기'}
-              className={`rounded-full p-2 ${pushOn ? 'bg-brand-50 text-brand-600' : 'bg-gray-100 text-gray-400'}`}
+              onClick={() => setProfileMenuOpen((v) => !v)}
+              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 hover:bg-gray-50 sm:pr-2"
             >
-              {pushOn ? <Bell size={18} /> : <BellOff size={18} />}
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
+                {profile?.name?.slice(-1) ?? '?'}
+              </span>
+              <span className="hidden text-sm font-semibold text-gray-800 sm:inline">{profile?.name}</span>
+              <ChevronDown size={14} className="hidden text-gray-400 sm:inline" />
             </button>
-            <button onClick={signOut} title="로그아웃" className="rounded-full bg-gray-100 p-2 text-gray-500">
-              <LogOut size={18} />
-            </button>
+            {profileMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setProfileMenuOpen(false)} />
+                <div className="absolute right-0 top-11 z-20 w-48 rounded-xl border border-gray-100 bg-white p-1.5 shadow-lg">
+                  <p className="px-3 py-1.5 text-xs text-gray-400">{profile?.position ?? profile?.roleCode}</p>
+                  <button
+                    onClick={togglePush}
+                    disabled={pushBusy}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    {pushOn ? <Bell size={15} /> : <BellOff size={15} />} 푸시 알림 {pushOn ? '끄기' : '켜기'}
+                  </button>
+                  <button onClick={signOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                    <LogOut size={15} /> 로그아웃
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-2 py-4 sm:px-4">
-        <div className="mb-3 flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <button onClick={goPrevMonth} className="rounded-full p-1.5 hover:bg-gray-100">
-              <ChevronLeft size={20} />
-            </button>
-            <h1 className="w-32 text-center text-lg font-bold text-gray-900">{formatYm(year, month)}</h1>
-            <button onClick={goNextMonth} className="rounded-full p-1.5 hover:bg-gray-100">
-              <ChevronRight size={20} />
-            </button>
+      <div className="flex flex-1 overflow-hidden">
+        <div className="hidden h-full lg:block">{NavContent}</div>
+
+        {mobileNavOpen && (
+          <div className="fixed inset-0 z-30 lg:hidden">
+            <div className="absolute inset-0 bg-black/30" onClick={() => setMobileNavOpen(false)} />
+            <div className="absolute inset-y-0 left-0 shadow-xl">{NavContent}</div>
           </div>
-          <select
-            value={filterTeamId}
-            onChange={(e) => setFilterTeamId(e.target.value)}
-            className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-600"
-          >
-            <option value="all">전체 팀</option>
-            {teams.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        )}
 
-        <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 text-xs sm:text-sm">
-          {WEEKDAY_LABELS.map((w, i) => (
-            <div key={w} className={`bg-gray-50 py-1.5 text-center font-medium ${i === 5 ? 'text-blue-500' : i === 6 ? 'text-red-500' : 'text-gray-500'}`}>
-              {w}
-            </div>
-          ))}
-          {grid.map((d) => {
-            const dateStr = toDateStr(d)
-            const inMonth = d.getMonth() === month
-            const dayEntries = entriesByDate.get(dateStr) ?? []
-            const dayNotices = noticesForDate(dateStr)
-            const isToday = dateStr === today
-            return (
-              <button
-                key={dateStr}
-                onClick={() => setSelectedDate(dateStr)}
-                className={`min-h-[76px] sm:min-h-[92px] bg-white p-1 text-left align-top transition hover:bg-brand-50 ${!inMonth ? 'opacity-40' : ''}`}
-              >
-                <span
-                  className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] sm:text-xs ${
-                    isToday ? 'bg-brand-600 font-semibold text-white' : 'text-gray-700'
-                  }`}
-                >
-                  {d.getDate()}
-                </span>
-                <div className="mt-0.5 space-y-0.5">
-                  {dayNotices.slice(0, 1).map((n) => (
-                    <div key={n.id} className="flex items-center gap-0.5 truncate rounded bg-amber-100 px-1 py-0.5 text-[10px] text-amber-800">
-                      <Megaphone size={9} className="shrink-0" />
-                      <span className="truncate">{n.title}</span>
-                    </div>
-                  ))}
-                  {dayEntries.slice(0, 3).map((e) => (
-                    <div key={e.id} className="flex items-center gap-1 truncate text-[10px] sm:text-[11px]">
-                      <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${categoryOf(e.status).dot}`} />
-                      <span className="truncate text-gray-600">{e.profile_name}</span>
-                    </div>
-                  ))}
-                  {dayEntries.length > 3 && <p className="text-[10px] text-gray-400">+{dayEntries.length - 3}명 더</p>}
+        {activeView === 'members' && (
+          <div className="flex-1 overflow-y-auto">
+            <MembersView roster={roster} stores={stores} teams={teams} searchQuery={searchQuery} />
+          </div>
+        )}
+
+        {activeView === 'notices' && (
+          <div className="flex-1 overflow-y-auto">
+            <NoticesView notices={notices} searchQuery={searchQuery} isManager={isManager} onCreate={() => setNoticeDate(today)} />
+          </div>
+        )}
+
+        {activeView === 'admin' && (
+          <div className="flex-1 overflow-y-auto">
+            <AdminView entries={entries} notices={notices} roster={roster} monthLabel={monthLabel} onCreateNotice={() => setNoticeDate(today)} />
+          </div>
+        )}
+
+        {(activeView === 'all' || activeView === 'mine') && (
+          <>
+            <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5">
+                  <button onClick={goPrevMonth} className="rounded-full p-1.5 hover:bg-gray-100">
+                    <ChevronLeft size={20} />
+                  </button>
+                  <h1 className="w-36 text-center text-xl font-bold text-gray-900">{monthLabel}</h1>
+                  <button onClick={goNextMonth} className="rounded-full p-1.5 hover:bg-gray-100">
+                    <ChevronRight size={20} />
+                  </button>
                 </div>
-              </button>
-            )
-          })}
-        </div>
-      </main>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={filterTeamId}
+                    onChange={(e) => setFilterTeamId(e.target.value)}
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-600"
+                  >
+                    <option value="all">전체팀</option>
+                    {teams.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value as EntryStatus | 'all')}
+                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-600"
+                  >
+                    <option value="all">전체 일정</option>
+                    {ENTRY_CATEGORIES.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
 
-      {selectedDate && (
+              <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                {LEGEND_CATEGORIES.map((c) => (
+                  <span key={c.value} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} /> {c.label}
+                  </span>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 text-xs sm:text-sm">
+                {WEEKDAY_LABELS.map((w, i) => (
+                  <div
+                    key={w}
+                    className={`bg-gray-50 py-2 text-center font-medium ${i === 5 ? 'text-blue-500' : i === 6 ? 'text-red-500' : 'text-gray-500'}`}
+                  >
+                    {w}
+                  </div>
+                ))}
+                {grid.map((d) => {
+                  const dateStr = toDateStr(d)
+                  const inMonth = d.getMonth() === month
+                  const dayEntries = entriesByDate.get(dateStr) ?? []
+                  const dayMeetingNotices = noticesForDate(dateStr).filter((n) => n.meeting_at)
+                  const isToday = dateStr === today
+                  const isSelected = dateStr === selectedDate
+
+                  const badges: { key: string; label: string; cls: string }[] = [
+                    ...dayMeetingNotices.map((n) => ({
+                      key: `n-${n.id}`,
+                      label: `회의 ${fmtTime(n.meeting_at as string)}`,
+                      cls: 'bg-violet-50 text-violet-700 border-violet-300',
+                    })),
+                    ...dayEntries.map((e) => ({
+                      key: e.id,
+                      label: `${categoryOf(e.status).label} ${e.profile_name}`,
+                      cls: categoryOf(e.status).color,
+                    })),
+                  ]
+
+                  return (
+                    <button
+                      key={dateStr}
+                      onClick={() => {
+                        setSelectedDate(dateStr)
+                        setShowDayModal(true)
+                      }}
+                      className={`min-h-[80px] p-1.5 text-left align-top transition hover:bg-brand-50 sm:min-h-[104px] ${
+                        !inMonth ? 'bg-gray-50/60 opacity-40' : isSelected ? 'bg-brand-50' : 'bg-white'
+                      }`}
+                    >
+                      <span
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] sm:text-xs ${
+                          isToday ? 'bg-brand-600 font-semibold text-white' : isSelected ? 'font-bold text-brand-700' : 'text-gray-700'
+                        }`}
+                      >
+                        {d.getDate()}
+                      </span>
+                      <div className="mt-1 space-y-0.5">
+                        {badges.slice(0, 3).map((b) => (
+                          <div key={b.key} className={`truncate rounded border px-1 py-0.5 text-[10px] font-medium ${b.cls}`}>
+                            {b.label}
+                          </div>
+                        ))}
+                        {badges.length > 3 && <p className="text-[10px] text-gray-400">+{badges.length - 3}</p>}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </main>
+
+            <div className="hidden h-full lg:block">
+              <RightPanel
+                dateStr={selectedDate}
+                isToday={selectedDate === today}
+                dayEntries={selectedEntries}
+                dayNotices={selectedNotices}
+                teams={teams}
+                stores={stores}
+                onGoToday={goToday}
+                onOpenDetail={() => setShowDayModal(true)}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      {showDayModal && (
         <DayDetailModal
           dateStr={selectedDate}
-          entries={entries.filter((e) => e.entry_date === selectedDate)}
-          notices={noticesForDate(selectedDate)}
-          onClose={() => setSelectedDate(null)}
-          onChanged={() => {
-            loadMonth()
+          entries={selectedEntries}
+          notices={selectedNotices}
+          onClose={() => setShowDayModal(false)}
+          onChanged={() => loadMonth()}
+          onOpenNotice={() => {
+            setShowDayModal(false)
+            setNoticeDate(selectedDate)
           }}
-          onOpenNotice={() => setNoticeDate(selectedDate)}
         />
       )}
 
