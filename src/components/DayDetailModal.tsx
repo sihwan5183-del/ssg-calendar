@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Modal from './Modal'
 import { supabase } from '../lib/supabase'
 import type { Notice, RankInfo, ScheduleEntry } from '../lib/types'
+import { rankedName } from '../lib/types'
 import { useAuth } from '../lib/AuthContext'
 import { Video, Trash2, Pencil, Megaphone } from 'lucide-react'
 
@@ -167,7 +168,7 @@ export default function DayDetailModal({
                     <span className="flex min-w-0 items-center gap-2">
                       <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
                       <span className="shrink-0 font-medium text-gray-800">
-                        {e.profile_name}
+                        {rankedName(rank, e.profile_name ?? '')}
                         {e.store_name && <span className="text-xs font-normal text-gray-400"> · {e.store_name}</span>}
                       </span>
                     </span>
