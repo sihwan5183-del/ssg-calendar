@@ -25,7 +25,7 @@ import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/pu
 import { ChevronLeft, ChevronRight, LogOut, Bell, BellOff, CalendarDays, Search, ChevronDown, Menu } from 'lucide-react'
 
 export default function CalendarPage() {
-  const { profile, signOut, isManager } = useAuth()
+  const { profile, signOut, isManager, isAdmin } = useAuth()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())
@@ -40,6 +40,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string>(todayStr())
   const [showDayModal, setShowDayModal] = useState(false)
   const [noticeDate, setNoticeDate] = useState<string | null>(null)
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
   const [activeView, setActiveView] = useState<ViewKey>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
@@ -86,8 +87,8 @@ export default function CalendarPage() {
 
   const loadRankConfig = useCallback(async () => {
     const [{ data: rs }, { data: ov }] = await Promise.all([
-      supabase.from('rank_settings').select('key, label, color_key'),
-      supabase.from('person_rank_overrides').select('profile_id, rank_key'),
+      supabase.schema('calendar_app').from('rank_settings').select('key, label, color_key'),
+      supabase.schema('calendar_app').from('person_rank_overrides').select('profile_id, rank_key'),
     ])
     setRankSettings(rs ?? [])
     setRankOverrides(ov ?? [])
@@ -163,6 +164,14 @@ export default function CalendarPage() {
   useEffect(() => {
     loadMonth()
   }, [loadMonth])
+
+  const deleteNotice = useCallback(
+    async (n: Notice) => {
+      await supabase.from('notices').delete().eq('id', n.id)
+      loadMonth()
+    },
+    [loadMonth],
+  )
 
   const entriesByDate = useMemo(() => {
     const map = new Map<string, ScheduleEntry[]>()
@@ -317,7 +326,16 @@ export default function CalendarPage() {
 
         {activeView === 'notices' && (
           <div className="flex-1 overflow-y-auto">
-            <NoticesView notices={notices} searchQuery={searchQuery} isManager={isManager} onCreate={() => setNoticeDate(today)} />
+            <NoticesView
+              notices={notices}
+              searchQuery={searchQuery}
+              isManager={isManager}
+              myProfileId={profile?.id}
+              isAdmin={isAdmin}
+              onCreate={() => setNoticeDate(today)}
+              onEdit={(n) => setEditingNotice(n)}
+              onDelete={deleteNotice}
+            />
           </div>
         )}
 
@@ -332,6 +350,7 @@ export default function CalendarPage() {
               rankSettings={rankSettings}
               rankOverrides={rankOverrides}
               onRankChanged={loadRankConfig}
+              isAdmin={isAdmin}
             />
           </div>
         )}
@@ -474,15 +493,20 @@ export default function CalendarPage() {
         />
       )}
 
-      {noticeDate && (
+      {(noticeDate || editingNotice) && (
         <NoticeModal
-          dateStr={noticeDate}
+          dateStr={editingNotice?.start_date ?? noticeDate ?? today}
+          editingNotice={editingNotice ?? undefined}
           teams={teams}
           stores={stores}
           roster={roster}
-          onClose={() => setNoticeDate(null)}
+          onClose={() => {
+            setNoticeDate(null)
+            setEditingNotice(null)
+          }}
           onSaved={() => {
             setNoticeDate(null)
+            setEditingNotice(null)
             loadMonth()
           }}
         />
