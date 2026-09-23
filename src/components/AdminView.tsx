@@ -12,6 +12,7 @@ export default function AdminView({
   rankSettings,
   rankOverrides,
   onRankChanged,
+  isAdmin,
 }: {
   entries: ScheduleEntry[]
   notices: Notice[]
@@ -21,6 +22,7 @@ export default function AdminView({
   rankSettings: { key: string; label: string; color_key: string }[]
   rankOverrides: { profile_id: string; rank_key: string }[]
   onRankChanged: () => void
+  isAdmin: boolean
 }) {
   const [tab, setTab] = useState<'summary' | 'rank'>('summary')
 
@@ -44,26 +46,28 @@ export default function AdminView({
         )}
       </div>
 
-      <div className="mb-5 flex gap-1 border-b border-gray-100">
-        <button
-          onClick={() => setTab('summary')}
-          className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium ${
-            tab === 'summary' ? 'border-brand-600 text-brand-700' : 'border-transparent text-gray-400'
-          }`}
-        >
-          <CalendarDays size={15} /> 요약
-        </button>
-        <button
-          onClick={() => setTab('rank')}
-          className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium ${
-            tab === 'rank' ? 'border-brand-600 text-brand-700' : 'border-transparent text-gray-400'
-          }`}
-        >
-          <Palette size={15} /> 직급 색상 설정
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="mb-5 flex gap-1 border-b border-gray-100">
+          <button
+            onClick={() => setTab('summary')}
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium ${
+              tab === 'summary' ? 'border-brand-600 text-brand-700' : 'border-transparent text-gray-400'
+            }`}
+          >
+            <CalendarDays size={15} /> 요약
+          </button>
+          <button
+            onClick={() => setTab('rank')}
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium ${
+              tab === 'rank' ? 'border-brand-600 text-brand-700' : 'border-transparent text-gray-400'
+            }`}
+          >
+            <Palette size={15} /> 직급 색상 설정
+          </button>
+        </div>
+      )}
 
-      {tab === 'summary' ? (
+      {tab === 'summary' || !isAdmin ? (
         <div className="grid grid-cols-3 gap-3">
           {stats.map((s) => {
             const Icon = s.icon
