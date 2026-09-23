@@ -1,5 +1,5 @@
 import { Clock, Users, Video, Megaphone, Plus } from 'lucide-react'
-import { rankGroupOf, type Notice, type ScheduleEntry, type Team, type Store } from '../lib/types'
+import type { Notice, RankInfo, ScheduleEntry, Team, Store } from '../lib/types'
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -13,6 +13,8 @@ function audienceLabel(n: Notice, teams: Team[], stores: Store[]) {
 }
 
 export default function RightPanel({
+  rankByProfileId,
+  rankFallback,
   dateStr,
   isToday,
   dayEntries,
@@ -22,6 +24,8 @@ export default function RightPanel({
   onGoToday,
   onOpenDetail,
 }: {
+  rankByProfileId: Map<string, RankInfo>
+  rankFallback: RankInfo
   dateStr: string
   isToday: boolean
   dayEntries: ScheduleEntry[]
@@ -63,7 +67,7 @@ export default function RightPanel({
         ) : (
           <ul className="space-y-1.5">
             {dayEntries.slice(0, 5).map((e) => {
-              const rank = rankGroupOf(e.profile_position)
+              const rank = rankByProfileId.get(e.profile_id) ?? rankFallback
               return (
                 <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm">
                   <span className="flex min-w-0 items-center gap-2">
