@@ -38,6 +38,28 @@ export function categoryOf(status: string) {
   return ENTRY_CATEGORIES.find((c) => c.value === status) ?? ENTRY_CATEGORIES[ENTRY_CATEGORIES.length - 1]
 }
 
+// 직급(직책)에 따른 색상 구분 — 휴무/연차 등 일정 종류가 아니라 "누구인지"로 색이 정해짐
+// 대표·이사·실장은 한 색으로 묶고, 영업이사·영업팀장·팀장은 각각 다른 색, 그 외 전 직원은 기본색
+export type RankGroupKey = 'exec' | 'sales_director' | 'sales_team_lead' | 'team_lead' | 'default'
+
+export const RANK_GROUPS: { key: RankGroupKey; label: string; color: string; dot: string }[] = [
+  { key: 'exec', label: '대표·이사·실장', color: 'bg-slate-100 text-slate-800 border-slate-400', dot: 'bg-slate-700' },
+  { key: 'sales_director', label: '영업이사', color: 'bg-rose-50 text-rose-700 border-rose-300', dot: 'bg-rose-500' },
+  { key: 'sales_team_lead', label: '영업팀장', color: 'bg-orange-50 text-orange-700 border-orange-300', dot: 'bg-orange-500' },
+  { key: 'team_lead', label: '팀장', color: 'bg-teal-50 text-teal-700 border-teal-300', dot: 'bg-teal-500' },
+  { key: 'default', label: '일반 직원', color: 'bg-blue-50 text-blue-700 border-blue-300', dot: 'bg-blue-500' },
+]
+
+export function rankGroupOf(position: string | null | undefined): (typeof RANK_GROUPS)[number] {
+  const p = (position ?? '').trim()
+  let key: RankGroupKey = 'default'
+  if (p.includes('영업이사')) key = 'sales_director'
+  else if (p.includes('영업팀장')) key = 'sales_team_lead'
+  else if (p.includes('팀장')) key = 'team_lead'
+  else if (p.includes('대표') || p.includes('대장') || p.includes('이사') || p.includes('실장')) key = 'exec'
+  return RANK_GROUPS.find((g) => g.key === key)!
+}
+
 export type ScheduleEntry = {
   id: string
   profile_id: string
@@ -46,6 +68,7 @@ export type ScheduleEntry = {
   note: string | null
   created_by: string | null
   profile_name?: string
+  profile_position?: string | null
   store_name?: string
   team_id?: string | null
 }
