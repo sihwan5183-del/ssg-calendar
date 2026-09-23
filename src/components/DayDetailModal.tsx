@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import Modal from './Modal'
 import { supabase } from '../lib/supabase'
-import { rankGroupOf, type Notice, type ScheduleEntry } from '../lib/types'
+import type { Notice, RankInfo, ScheduleEntry } from '../lib/types'
 import { useAuth } from '../lib/AuthContext'
 import { Video, Trash2, Pencil, Megaphone } from 'lucide-react'
 
 export default function DayDetailModal({
+  rankByProfileId,
+  rankFallback,
   dateStr,
   entries,
   notices,
@@ -13,6 +15,8 @@ export default function DayDetailModal({
   onChanged,
   onOpenNotice,
 }: {
+  rankByProfileId: Map<string, RankInfo>
+  rankFallback: RankInfo
   dateStr: string
   entries: ScheduleEntry[]
   notices: Notice[]
@@ -57,10 +61,10 @@ export default function DayDetailModal({
   }
 
   const others = entries.filter((e) => e.profile_id !== profile?.id)
-  const myRank = rankGroupOf(profile?.position)
+  const myRank = (profile && rankByProfileId.get(profile.id)) ?? rankFallback
 
   return (
-    <Modal title={label} onClose={onClose}>
+    <Modal title={label} onClose={onClose} size="xl">
       <div className="space-y-5">
         {notices.length > 0 && (
           <div className="space-y-2">
@@ -155,9 +159,9 @@ export default function DayDetailModal({
         {others.length > 0 && (
           <div>
             <h3 className="mb-2 text-sm font-medium text-gray-500">다른 직원 일정 ({others.length})</h3>
-            <ul className="space-y-1.5">
+            <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
               {others.map((e) => {
-                const rank = rankGroupOf(e.profile_position)
+                const rank = rankByProfileId.get(e.profile_id) ?? rankFallback
                 return (
                   <li key={e.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2 text-sm">
                     <span className="flex min-w-0 items-center gap-2">
