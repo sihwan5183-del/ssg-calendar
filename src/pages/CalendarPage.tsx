@@ -306,7 +306,7 @@ export default function CalendarPage() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <div className="hidden h-full lg:block">{NavContent}</div>
 
         {mobileNavOpen && (
@@ -317,7 +317,7 @@ export default function CalendarPage() {
         )}
 
         {activeView === 'members' && (
-          <div className="flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <MembersView
               roster={roster}
               stores={stores}
@@ -329,7 +329,7 @@ export default function CalendarPage() {
         )}
 
         {activeView === 'notices' && (
-          <div className="flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <NoticesView
               notices={notices}
               searchQuery={searchQuery}
@@ -344,7 +344,7 @@ export default function CalendarPage() {
         )}
 
         {activeView === 'admin' && (
-          <div className="flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             <AdminView
               entries={entries}
               notices={notices}
@@ -361,7 +361,7 @@ export default function CalendarPage() {
 
         {(activeView === 'all' || activeView === 'mine') && (
           <>
-            <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+            <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
               <div className="mb-4 flex items-center justify-center gap-1.5">
                 <button onClick={goPrevMonth} className="rounded-full p-1.5 hover:bg-gray-100">
                   <ChevronLeft size={20} />
