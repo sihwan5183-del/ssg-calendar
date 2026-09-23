@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { getMonthGrid, WEEKDAY_LABELS, formatYm, toDateStr, todayStr, fmtTime } from '../lib/dateUtils'
-import { ENTRY_CATEGORIES, categoryOf, type Notice, type Profile, type ScheduleEntry, type Store, type Team, type EntryStatus } from '../lib/types'
+import { RANK_GROUPS, rankGroupOf, type Notice, type Profile, type ScheduleEntry, type Store, type Team } from '../lib/types'
 import DayDetailModal from '../components/DayDetailModal'
 import NoticeModal from '../components/NoticeModal'
 import Sidebar, { type ViewKey } from '../components/Sidebar'
@@ -12,8 +12,6 @@ import NoticesView from '../components/NoticesView'
 import AdminView from '../components/AdminView'
 import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/push'
 import { ChevronLeft, ChevronRight, LogOut, Bell, BellOff, CalendarDays, Search, ChevronDown, Menu } from 'lucide-react'
-
-const LEGEND_CATEGORIES = ENTRY_CATEGORIES.slice(0, 5) // 휴무/연차/휴가/회의/외근
 
 export default function CalendarPage() {
   const { profile, signOut, isManager } = useAuth()
@@ -26,7 +24,6 @@ export default function CalendarPage() {
   const [stores, setStores] = useState<Store[]>([])
   const [roster, setRoster] = useState<Profile[]>([])
   const [filterTeamId, setFilterTeamId] = useState<string>('all')
-  const [filterStatus, setFilterStatus] = useState<EntryStatus | 'all'>('all')
   const [selectedDate, setSelectedDate] = useState<string>(todayStr())
   const [showDayModal, setShowDayModal] = useState(false)
   const [noticeDate, setNoticeDate] = useState<string | null>(null)
@@ -88,7 +85,7 @@ export default function CalendarPage() {
     const [{ data: entryData }, { data: noticeData }] = await Promise.all([
       supabase
         .from('schedule_entries')
-        .select('id, profile_id, entry_date, status, note, created_by, profiles!schedule_entries_profile_id_fkey(name, store_id)')
+        .select('id, profile_id, entry_date, status, note, created_by, profiles!schedule_entries_profile_id_fkey(name, store_id, position)')
         .gte('entry_date', gridStart)
         .lte('entry_date', gridEnd),
       supabase
@@ -100,7 +97,7 @@ export default function CalendarPage() {
 
     setEntries(
       (entryData ?? []).map((e) => {
-        const p = e.profiles as unknown as { name: string; store_id: string | null } | null
+        const p = e.profiles as unknown as { name: string; store_id: string | null; position: string | null } | null
         const store = p?.store_id ? storesById.get(p.store_id) : undefined
         return {
           id: e.id,
@@ -110,6 +107,7 @@ export default function CalendarPage() {
           note: e.note,
           created_by: e.created_by,
           profile_name: p?.name ?? '(알 수 없음)',
+          profile_position: p?.position ?? null,
           store_name: store?.pos_name,
           team_id: store?.team_id ?? null,
         }
@@ -126,14 +124,13 @@ export default function CalendarPage() {
     const map = new Map<string, ScheduleEntry[]>()
     for (const e of entries) {
       if (filterTeamId !== 'all' && e.team_id !== filterTeamId) continue
-      if (filterStatus !== 'all' && e.status !== filterStatus) continue
       if (activeView === 'mine' && e.profile_id !== profile?.id) continue
       if (searchQuery && !(e.profile_name ?? '').includes(searchQuery)) continue
       if (!map.has(e.entry_date)) map.set(e.entry_date, [])
       map.get(e.entry_date)!.push(e)
     }
     return map
-  }, [entries, filterTeamId, filterStatus, activeView, profile?.id, searchQuery])
+  }, [entries, filterTeamId, activeView, profile?.id, searchQuery])
 
   const noticesForDate = useCallback(
     (dateStr: string) => {
@@ -312,27 +309,18 @@ export default function CalendarPage() {
                       </option>
                     ))}
                   </select>
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value as EntryStatus | 'all')}
-                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-600"
-                  >
-                    <option value="all">전체 일정</option>
-                    {ENTRY_CATEGORIES.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
                 </div>
               </div>
 
               <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                {LEGEND_CATEGORIES.map((c) => (
-                  <span key={c.value} className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <span className={`h-2.5 w-2.5 rounded-full ${c.dot}`} /> {c.label}
+                {RANK_GROUPS.map((g) => (
+                  <span key={g.key} className="flex items-center gap-1.5 text-xs text-gray-600">
+                    <span className={`h-2.5 w-2.5 rounded-full ${g.dot}`} /> {g.label}
                   </span>
                 ))}
+                <span className="flex items-center gap-1.5 text-xs text-gray-600">
+                  <span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> 회의(공지)
+                </span>
               </div>
 
               <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 text-xs sm:text-sm">
@@ -360,8 +348,8 @@ export default function CalendarPage() {
                     })),
                     ...dayEntries.map((e) => ({
                       key: e.id,
-                      label: `${categoryOf(e.status).label} ${e.profile_name}`,
-                      cls: categoryOf(e.status).color,
+                      label: e.note ? `${e.profile_name} ${e.note}` : e.profile_name ?? '',
+                      cls: rankGroupOf(e.profile_position).color,
                     })),
                   ]
 
@@ -372,7 +360,7 @@ export default function CalendarPage() {
                         setSelectedDate(dateStr)
                         setShowDayModal(true)
                       }}
-                      className={`min-h-[80px] p-1.5 text-left align-top transition hover:bg-brand-50 sm:min-h-[104px] ${
+                      className={`p-1.5 text-left align-top transition hover:bg-brand-50 ${
                         !inMonth ? 'bg-gray-50/60 opacity-40' : isSelected ? 'bg-brand-50' : 'bg-white'
                       }`}
                     >
@@ -384,12 +372,11 @@ export default function CalendarPage() {
                         {d.getDate()}
                       </span>
                       <div className="mt-1 space-y-0.5">
-                        {badges.slice(0, 3).map((b) => (
-                          <div key={b.key} className={`truncate rounded border px-1 py-0.5 text-[10px] font-medium ${b.cls}`}>
+                        {badges.map((b) => (
+                          <div key={b.key} className={`break-words rounded border px-1 py-0.5 text-[10px] font-medium leading-tight ${b.cls}`}>
                             {b.label}
                           </div>
                         ))}
-                        {badges.length > 3 && <p className="text-[10px] text-gray-400">+{badges.length - 3}</p>}
                       </div>
                     </button>
                   )
