@@ -1,5 +1,5 @@
 import { Clock, Users, Video, Megaphone, Plus } from 'lucide-react'
-import { categoryOf, type Notice, type ScheduleEntry, type Team, type Store } from '../lib/types'
+import { rankGroupOf, type Notice, type ScheduleEntry, type Team, type Store } from '../lib/types'
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -63,17 +63,14 @@ export default function RightPanel({
         ) : (
           <ul className="space-y-1.5">
             {dayEntries.slice(0, 5).map((e) => {
-              const cat = categoryOf(e.status)
+              const rank = rankGroupOf(e.profile_position)
               return (
-                <li key={e.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm">
+                <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm">
                   <span className="flex min-w-0 items-center gap-2">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${cat.dot}`} />
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
                     <span className="truncate font-medium text-gray-800">{e.profile_name}</span>
                   </span>
-                  <span className="flex shrink-0 items-center gap-2">
-                    <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${cat.color}`}>{cat.label}</span>
-                    <span className="text-[11px] text-gray-400">종일</span>
-                  </span>
+                  <span className="truncate text-xs text-gray-500">{e.note}</span>
                 </li>
               )
             })}
