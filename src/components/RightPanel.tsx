@@ -1,5 +1,6 @@
 import { Clock, Users, Video, Megaphone, Plus } from 'lucide-react'
 import type { Notice, RankInfo, ScheduleEntry, Team, Store } from '../lib/types'
+import { rankedName } from '../lib/types'
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -72,7 +73,7 @@ export default function RightPanel({
                 <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm">
                   <span className="flex min-w-0 items-center gap-2">
                     <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
-                    <span className="truncate font-medium text-gray-800">{e.profile_name}</span>
+                    <span className="truncate font-medium text-gray-800">{rankedName(rank, e.profile_name ?? '')}</span>
                   </span>
                   <span className="truncate text-xs text-gray-500">{e.note}</span>
                 </li>
