@@ -20,7 +20,7 @@ export default function Sidebar({
   isManager: boolean
 }) {
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-gray-100 bg-white px-3 py-4">
+    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-gray-800 bg-gray-900 px-3 py-4">
       <nav className="space-y-1">
         {NAV_ITEMS.filter((item) => !item.managerOnly || isManager).map((item) => {
           const Icon = item.icon
@@ -30,7 +30,7 @@ export default function Sidebar({
               key={item.key}
               onClick={() => onChange(item.key)}
               className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                isActive ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'
+                isActive ? 'bg-brand-500/15 text-brand-500' : 'text-gray-300 hover:bg-gray-800'
               }`}
             >
               <Icon size={18} />
@@ -49,7 +49,7 @@ export default function Sidebar({
           <rect x="56" y="40" width="18" height="28" rx="3" fill="#DBE6FE" />
           <circle cx="65" cy="28" r="9" fill="#3B6FE0" />
         </svg>
-        <p className="text-xs leading-relaxed text-gray-400">
+        <p className="text-xs leading-relaxed text-gray-500">
           좋은 팀이
           <br />
           좋은 결과를 만듭니다.
