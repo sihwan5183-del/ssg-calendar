@@ -392,16 +392,17 @@ export default function CalendarPage() {
                   const isToday = dateStr === today
                   const isSelected = dateStr === selectedDate
 
-                  const badges: { key: string; label: string; cls: string }[] = [
+                  const badges: { key: string; label: string; timeLine?: string; cls: string }[] = [
                     ...dayMeetingNotices.map((n) => ({
                       key: `n-${n.id}`,
-                      label: `회의 ${fmtTime(n.meeting_at as string)}`,
+                      label: '회의',
+                      timeLine: fmtTime(n.meeting_at as string),
                       cls: 'bg-violet-50 text-violet-700 border-violet-300',
                     })),
                     ...dayEntries.map((e) => {
                       const rank = rankByProfileId.map.get(e.profile_id) ?? rankByProfileId.fallback
                       const who = rankedName(rank, e.profile_name ?? '')
-                      return { key: e.id, label: e.note ? `${who} ${e.note}` : who, cls: rank.color }
+                      return { key: e.id, label: e.note ? `${who} : ${e.note}` : who, cls: rank.color }
                     }),
                   ]
 
@@ -427,6 +428,7 @@ export default function CalendarPage() {
                         {badges.map((b) => (
                           <div key={b.key} className={`break-words rounded border px-1.5 py-1 text-xs font-medium leading-snug ${b.cls}`}>
                             {b.label}
+                            {b.timeLine && <div className="whitespace-nowrap">{b.timeLine}</div>}
                           </div>
                         ))}
                       </div>
