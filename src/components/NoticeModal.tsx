@@ -93,7 +93,7 @@ export default function NoticeModal({
   }
 
   return (
-    <Modal title="공지 등록" onClose={onClose} wide>
+    <Modal title="공지 등록" onClose={onClose} size="xl">
       <div className="space-y-3">
         <input
           value={title}
