@@ -41,7 +41,7 @@ export function categoryOf(status: string) {
 // 직급(직책)에 따른 색상 구분 — 휴무/연차 등 일정 종류가 아니라 "누구인지"로 색이 정해짐
 // 기본 그룹: 대표·이사·실장은 한 색, 영업이사·영업팀장·팀장은 각각 다른 색, 그 외 전 직원은 기본색
 // 관리자가 색상/직원별 소속 그룹을 조정할 수 있음(calendar_app.rank_settings / person_rank_overrides)
-export type RankGroupKey = 'exec' | 'sales_director' | 'sales_team_lead' | 'team_lead' | 'default'
+export type RankGroupKey = 'exec' | 'director' | 'head' | 'sales_director' | 'sales_team_lead' | 'team_lead' | 'default'
 
 export type RankInfo = { key: RankGroupKey; label: string; colorKey: string; color: string; dot: string }
 
@@ -66,10 +66,12 @@ export function paletteOf(colorKey: string) {
 
 // 기본값(DB 조회 실패 시 폴백용) — 실제 표시는 rank_settings 테이블 값을 우선 사용
 export const DEFAULT_RANK_GROUPS: { key: RankGroupKey; label: string; colorKey: string }[] = [
-  { key: 'exec', label: '대표·이사·실장', colorKey: 'slate' },
+  { key: 'exec', label: '대표', colorKey: 'slate' },
+  { key: 'director', label: '이사', colorKey: 'purple' },
+  { key: 'head', label: '실장', colorKey: 'teal' },
   { key: 'sales_director', label: '영업이사', colorKey: 'rose' },
   { key: 'sales_team_lead', label: '영업팀장', colorKey: 'orange' },
-  { key: 'team_lead', label: '팀장', colorKey: 'teal' },
+  { key: 'team_lead', label: '팀장', colorKey: 'orange' },
   { key: 'default', label: '일반 직원', colorKey: 'blue' },
 ]
 
@@ -79,7 +81,9 @@ export function autoRankKey(position: string | null | undefined): RankGroupKey {
   if (p.includes('영업이사')) return 'sales_director'
   if (p.includes('영업팀장')) return 'sales_team_lead'
   if (p.includes('팀장')) return 'team_lead'
-  if (p.includes('대표') || p.includes('대장') || p.includes('이사') || p.includes('실장')) return 'exec'
+  if (p.includes('대표') || p.includes('대장')) return 'exec'
+  if (p.includes('이사')) return 'director'
+  if (p.includes('실장')) return 'head'
   return 'default'
 }
 
