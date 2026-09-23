@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Modal from './Modal'
 import { supabase } from '../lib/supabase'
 import { sendNoticePushNow } from '../lib/push'
-import type { NoticeScope, Profile, Store, Team } from '../lib/types'
+import type { Notice, NoticeScope, Profile, Store, Team } from '../lib/types'
 import { useAuth } from '../lib/AuthContext'
 
 export default function NoticeModal({
@@ -10,6 +10,7 @@ export default function NoticeModal({
   teams,
   stores,
   roster,
+  editingNotice,
   onClose,
   onSaved,
 }: {
@@ -17,23 +18,31 @@ export default function NoticeModal({
   teams: Team[]
   stores: Store[]
   roster: Profile[]
+  editingNotice?: Notice
   onClose: () => void
   onSaved: () => void
 }) {
   const { profile } = useAuth()
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [meetingTime, setMeetingTime] = useState('')
-  const [zoomLink, setZoomLink] = useState('')
-  const [isImportant, setIsImportant] = useState(false)
-  const [remindMorning, setRemindMorning] = useState(true)
-  const [scope, setScope] = useState<NoticeScope>('all')
-  const [teamIds, setTeamIds] = useState<string[]>([])
-  const [storeIds, setStoreIds] = useState<string[]>([])
-  const [personIds, setPersonIds] = useState<string[]>([])
+  const [title, setTitle] = useState(editingNotice?.title ?? '')
+  const [content, setContent] = useState(editingNotice?.content ?? '')
+  const [meetingTime, setMeetingTime] = useState(
+    editingNotice?.meeting_at
+      ? new Date(editingNotice.meeting_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })
+      : '',
+  )
+  const [zoomLink, setZoomLink] = useState(editingNotice?.zoom_link ?? '')
+  const [isImportant, setIsImportant] = useState(editingNotice?.is_important ?? false)
+  const [remindMorning, setRemindMorning] = useState(editingNotice?.remind_morning_of ?? true)
+  const [scope, setScope] = useState<NoticeScope>(editingNotice?.scope ?? 'all')
+  const [teamIds, setTeamIds] = useState<string[]>(editingNotice?.target_team_ids ?? [])
+  const [storeIds, setStoreIds] = useState<string[]>(editingNotice?.target_store_ids ?? [])
+  const [personIds, setPersonIds] = useState<string[]>(editingNotice?.target_profile_ids ?? [])
   const [personQuery, setPersonQuery] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const isEditing = !!editingNotice
+  const effectiveDate = editingNotice?.start_date ?? dateStr
 
   const toggle = (arr: string[], set: (v: string[]) => void, id: string) => {
     set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id])
@@ -60,24 +69,37 @@ export default function NoticeModal({
     }
     setSaving(true)
     setError(null)
-    const meetingAt = meetingTime ? new Date(`${dateStr}T${meetingTime}:00+09:00`).toISOString() : null
+    const meetingAt = meetingTime ? new Date(`${effectiveDate}T${meetingTime}:00+09:00`).toISOString() : null
+    const payload = {
+      title: title.trim(),
+      content: content.trim(),
+      start_date: effectiveDate,
+      end_date: effectiveDate,
+      meeting_at: meetingAt,
+      zoom_link: zoomLink.trim() || null,
+      is_important: isImportant,
+      remind_morning_of: remindMorning,
+      scope,
+      target_team_ids: scope === 'by_team' ? teamIds : [],
+      target_store_ids: scope === 'by_store' ? storeIds : [],
+      target_profile_ids: scope === 'by_person' ? personIds : [],
+    }
+
+    if (isEditing) {
+      const { error: updateErr } = await supabase.from('notices').update(payload).eq('id', editingNotice.id)
+      if (updateErr) {
+        setSaving(false)
+        setError('공지 수정에 실패했습니다: ' + updateErr.message)
+        return
+      }
+      setSaving(false)
+      onSaved()
+      return
+    }
+
     const { data, error: insertErr } = await supabase
       .from('notices')
-      .insert({
-        title: title.trim(),
-        content: content.trim(),
-        author_id: profile.id,
-        start_date: dateStr,
-        end_date: dateStr,
-        meeting_at: meetingAt,
-        zoom_link: zoomLink.trim() || null,
-        is_important: isImportant,
-        remind_morning_of: remindMorning,
-        scope,
-        target_team_ids: scope === 'by_team' ? teamIds : [],
-        target_store_ids: scope === 'by_store' ? storeIds : [],
-        target_profile_ids: scope === 'by_person' ? personIds : [],
-      })
+      .insert({ ...payload, author_id: profile.id })
       .select('id')
       .single()
 
@@ -93,7 +115,7 @@ export default function NoticeModal({
   }
 
   return (
-    <Modal title="공지 등록" onClose={onClose} size="xl">
+    <Modal title={isEditing ? '공지 수정' : '공지 등록'} onClose={onClose} size="xl">
       <div className="space-y-3">
         <input
           value={title}
@@ -197,9 +219,9 @@ export default function NoticeModal({
                 {personIds.map((id) => {
                   const p = roster.find((r) => r.id === id)
                   return (
-                    <span key={id} className="rounded-full bg-brand-50 px-2 py-1 text-xs text-brand-700">
+                    <button key={id} onClick={() => toggle(personIds, setPersonIds, id)} className="rounded-full bg-brand-50 px-2 py-1 text-xs text-brand-700">
                       {p?.name ?? id} ✕
-                    </span>
+                    </button>
                   )
                 })}
               </div>
@@ -238,7 +260,7 @@ export default function NoticeModal({
           disabled={saving}
           className="w-full rounded-lg bg-brand-600 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
         >
-          {saving ? '등록 중...' : '공지 등록 및 알림 발송'}
+          {saving ? '저장 중...' : isEditing ? '수정 사항 저장' : '공지 등록 및 알림 발송'}
         </button>
       </div>
     </Modal>
