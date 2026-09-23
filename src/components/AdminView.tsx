@@ -35,7 +35,7 @@ export default function AdminView({
   return (
     <div className="mx-auto max-w-3xl px-6 py-6">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">관리자</h1>
+        <h1 className="text-xl font-bold text-gray-100">관리자</h1>
         {tab === 'summary' && (
           <button
             onClick={onCreateNotice}
@@ -47,11 +47,11 @@ export default function AdminView({
       </div>
 
       {isAdmin && (
-        <div className="mb-5 flex gap-1 border-b border-gray-100">
+        <div className="mb-5 flex gap-1 border-b border-gray-800">
           <button
             onClick={() => setTab('summary')}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium ${
-              tab === 'summary' ? 'border-brand-600 text-brand-700' : 'border-transparent text-gray-400'
+              tab === 'summary' ? 'border-brand-600 text-brand-500' : 'border-transparent text-gray-500'
             }`}
           >
             <CalendarDays size={15} /> 요약
@@ -59,7 +59,7 @@ export default function AdminView({
           <button
             onClick={() => setTab('rank')}
             className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium ${
-              tab === 'rank' ? 'border-brand-600 text-brand-700' : 'border-transparent text-gray-400'
+              tab === 'rank' ? 'border-brand-600 text-brand-500' : 'border-transparent text-gray-500'
             }`}
           >
             <Palette size={15} /> 직급 색상 설정
@@ -72,10 +72,10 @@ export default function AdminView({
           {stats.map((s) => {
             const Icon = s.icon
             return (
-              <div key={s.label} className="rounded-xl border border-gray-100 p-4">
+              <div key={s.label} className="rounded-xl border border-gray-800 p-4">
                 <Icon size={18} className="mb-2 text-brand-500" />
-                <p className="text-2xl font-bold text-gray-900">{s.value}</p>
-                <p className="mt-0.5 text-xs text-gray-400">{s.label}</p>
+                <p className="text-2xl font-bold text-gray-100">{s.value}</p>
+                <p className="mt-0.5 text-xs text-gray-500">{s.label}</p>
               </div>
             )
           })}
