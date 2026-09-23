@@ -384,20 +384,6 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                {DEFAULT_RANK_GROUPS.map((g) => {
-                  const info = rankByProfileId.resolve(g.key)
-                  return (
-                    <span key={g.key} className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <span className={`h-2.5 w-2.5 rounded-full ${info.dot}`} /> {info.label}
-                    </span>
-                  )
-                })}
-                <span className="flex items-center gap-1.5 text-xs text-gray-600">
-                  <span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> 회의(공지)
-                </span>
-              </div>
-
               <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 text-xs sm:text-sm">
                 {WEEKDAY_LABELS.map((w, i) => (
                   <div
