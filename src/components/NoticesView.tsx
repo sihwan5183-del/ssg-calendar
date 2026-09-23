@@ -27,7 +27,7 @@ export default function NoticesView({
   return (
     <div className="mx-auto max-w-3xl px-6 py-6">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">공지 ({filtered.length})</h1>
+        <h1 className="text-xl font-bold text-gray-100">공지 ({filtered.length})</h1>
         {isManager && (
           <button
             onClick={onCreate}
@@ -41,26 +41,26 @@ export default function NoticesView({
         {filtered.map((n) => {
           const canEdit = n.author_id === myProfileId || isAdmin
           return (
-          <div key={n.id} className={`rounded-xl border p-4 ${n.is_important ? 'border-rose-200 bg-rose-50' : 'border-gray-100 bg-white'}`}>
+          <div key={n.id} className={`rounded-xl border p-4 ${n.is_important ? 'border-rose-800 bg-rose-950/50' : 'border-gray-800 bg-gray-900'}`}>
             <div className="flex items-start gap-3">
-              <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${n.is_important ? 'bg-rose-500 text-white' : 'bg-gray-100 text-gray-500'}`}>
+              <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${n.is_important ? 'bg-rose-500 text-white' : 'bg-gray-800 text-gray-500'}`}>
                 <Megaphone size={15} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-gray-900">{n.title}</p>
+                  <p className="text-sm font-semibold text-gray-100">{n.title}</p>
                   <span className="flex shrink-0 items-center gap-2">
-                    <span className="text-xs text-gray-400">{n.start_date}</span>
+                    <span className="text-xs text-gray-500">{n.start_date}</span>
                     {canEdit && (
                       <>
-                        <button onClick={() => onEdit(n)} className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                        <button onClick={() => onEdit(n)} className="rounded-full p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300">
                           <Pencil size={13} />
                         </button>
                         <button
                           onClick={() => {
                             if (window.confirm('이 공지를 삭제할까요?')) onDelete(n)
                           }}
-                          className="rounded-full p-1 text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+                          className="rounded-full p-1 text-gray-500 hover:bg-rose-950 hover:text-rose-400"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -68,7 +68,7 @@ export default function NoticesView({
                     )}
                   </span>
                 </div>
-                {n.content && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-600">{n.content}</p>}
+                {n.content && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-300">{n.content}</p>}
                 {n.meeting_at && (
                   <p className="mt-1.5 text-xs text-gray-500">
                     회의 시간: {new Date(n.meeting_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })}
@@ -89,7 +89,7 @@ export default function NoticesView({
           </div>
           )
         })}
-        {filtered.length === 0 && <p className="py-10 text-center text-sm text-gray-400">공지가 없습니다.</p>}
+        {filtered.length === 0 && <p className="py-10 text-center text-sm text-gray-500">공지가 없습니다.</p>}
       </div>
     </div>
   )
