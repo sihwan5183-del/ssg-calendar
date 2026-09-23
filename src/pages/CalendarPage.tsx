@@ -6,7 +6,6 @@ import {
   DEFAULT_RANK_GROUPS,
   autoRankKey,
   paletteOf,
-  rankedName,
   type Notice,
   type Profile,
   type RankInfo,
@@ -401,10 +400,11 @@ export default function CalendarPage() {
                     })),
                     ...dayEntries.map((e) => {
                       const rank = rankByProfileId.map.get(e.profile_id) ?? rankByProfileId.fallback
-                      const who = rankedName(rank, e.profile_name ?? '')
-                      return { key: e.id, label: e.note ? `${who} : ${e.note}` : who, cls: rank.color }
+                      return { key: e.id, label: e.note ? `${e.profile_name} : ${e.note}` : e.profile_name ?? '', cls: rank.color }
                     }),
                   ]
+                  const visibleBadges = badges.slice(0, 5)
+                  const hiddenCount = badges.length - visibleBadges.length
 
                   return (
                     <button
@@ -425,12 +425,13 @@ export default function CalendarPage() {
                         {d.getDate()}
                       </span>
                       <div className="mt-1 space-y-0.5">
-                        {badges.map((b) => (
+                        {visibleBadges.map((b) => (
                           <div key={b.key} className={`break-words rounded border px-1.5 py-1 text-xs font-medium leading-snug ${b.cls}`}>
                             {b.label}
                             {b.timeLine && <div className="whitespace-nowrap">{b.timeLine}</div>}
                           </div>
                         ))}
+                        {hiddenCount > 0 && <p className="px-0.5 text-[11px] font-medium text-gray-400">+{hiddenCount}명 더</p>}
                       </div>
                     </button>
                   )
