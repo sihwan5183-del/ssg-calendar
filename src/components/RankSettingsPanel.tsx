@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { DEFAULT_RANK_GROUPS, RANK_COLOR_PALETTE, autoRankKey, paletteOf, type Profile, type RankGroupKey } from '../lib/types'
+import { DEFAULT_RANK_GROUPS, RANK_COLOR_PALETTE, autoRankKey, paletteOf, rankedName, type Profile, type RankGroupKey } from '../lib/types'
 
 type RankSettingRow = { key: string; label: string; color_key: string }
 type OverrideRow = { profile_id: string; rank_key: string }
@@ -93,10 +93,11 @@ export default function RankSettingsPanel({
             const auto = autoRankKey(p.position)
             const effective = (overrideByProfile.get(p.id) ?? auto) as RankGroupKey
             const isOverridden = overrideByProfile.has(p.id)
+            const effectiveLabel = settingsByKey.get(effective)?.label ?? DEFAULT_RANK_GROUPS.find((g) => g.key === effective)?.label ?? effective
             return (
               <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-800">{p.name}</p>
+                  <p className="truncate text-sm font-medium text-gray-800">{rankedName({ label: effectiveLabel }, p.name)}</p>
                   <p className="truncate text-xs text-gray-400">
                     {p.position ?? '직급 없음'}
                     {isOverridden && <span className="ml-1 text-brand-500">· 수동 지정됨</span>}
