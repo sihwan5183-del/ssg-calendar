@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -15,13 +15,13 @@ body,
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', system-ui, sans-serif;
-  background: #030712;
+  background: #f5f6f8;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 모바일에서 스크롤 시 바운스 배경 다크 처리 */
+/* 모바일에서 스크롤 시 바운스 배경 흰색 처리 */
 html {
-  background: #030712;
+  background: #f5f6f8;
 }
 
 input,
