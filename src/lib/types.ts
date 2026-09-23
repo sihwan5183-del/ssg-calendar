@@ -96,6 +96,10 @@ export function rankGroupOf(position: string | null | undefined): RankInfo {
   return { key: g.key, label: g.label, colorKey: g.colorKey, color: pal.color, dot: pal.dot }
 }
 
+export function rankedName(rank: { label: string }, name: string): string {
+  return `${rank.label}_${name}`
+}
+
 export type ScheduleEntry = {
   id: string
   profile_id: string
