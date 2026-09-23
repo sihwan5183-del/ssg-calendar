@@ -72,17 +72,17 @@ export default function DayDetailModal({
         {notices.length > 0 && (
           <div className="space-y-2">
             {notices.map((n) => (
-              <div key={n.id} className={`rounded-xl border p-3 ${n.is_important ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-gray-50'}`}>
+              <div key={n.id} className={`rounded-xl border p-3 ${n.is_important ? 'border-amber-700 bg-amber-950/50' : 'border-gray-700 bg-gray-950'}`}>
                 <div className="flex items-start gap-2">
-                  <Megaphone size={16} className={n.is_important ? 'mt-0.5 text-amber-600' : 'mt-0.5 text-gray-500'} />
+                  <Megaphone size={16} className={n.is_important ? 'mt-0.5 text-amber-400' : 'mt-0.5 text-gray-500'} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-900">{n.title}</p>
+                    <p className="text-sm font-semibold text-gray-100">{n.title}</p>
                     {n.meeting_at && (
                       <p className="mt-0.5 text-xs text-gray-500">
                         {new Date(n.meeting_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     )}
-                    {n.content && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{n.content}</p>}
+                    {n.content && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-300">{n.content}</p>}
                     {n.zoom_link && (
                       <a
                         href={n.zoom_link}
@@ -105,12 +105,12 @@ export default function DayDetailModal({
             <h3 className="text-sm font-medium text-gray-500">일정 ({entries.length})</h3>
             <div className="flex items-center gap-3">
               {!myEntry && !editing && (
-                <button onClick={startEdit} className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline">
+                <button onClick={startEdit} className="flex items-center gap-1 text-xs font-medium text-brand-500 hover:underline">
                   <Plus size={13} /> 내 일정 추가
                 </button>
               )}
               {isManager && (
-                <button onClick={onOpenNotice} className="text-xs font-medium text-brand-600 hover:underline">
+                <button onClick={onOpenNotice} className="text-xs font-medium text-brand-500 hover:underline">
                   + 공지 등록
                 </button>
               )}
@@ -118,14 +118,14 @@ export default function DayDetailModal({
           </div>
 
           {editing && (
-            <div className="mb-2 space-y-3 rounded-xl border border-gray-200 p-3">
+            <div className="mb-2 space-y-3 rounded-xl border border-gray-700 p-3">
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="예: 휴무, 연차, 외부감사 회의, 민석 결혼식 등 자유롭게 입력"
                 rows={3}
                 autoFocus
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-gray-100 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
               <div className="flex gap-2">
                 <button
@@ -135,7 +135,7 @@ export default function DayDetailModal({
                 >
                   저장
                 </button>
-                <button onClick={() => setEditing(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600">
+                <button onClick={() => setEditing(false)} className="rounded-lg border border-gray-600 px-4 py-2 text-sm text-gray-300">
                   취소
                 </button>
               </div>
@@ -143,7 +143,7 @@ export default function DayDetailModal({
           )}
 
           {entries.length === 0 && !editing && (
-            <p className="rounded-xl border border-dashed border-gray-300 py-6 text-center text-sm text-gray-400">등록된 일정이 없습니다.</p>
+            <p className="rounded-xl border border-dashed border-gray-600 py-6 text-center text-sm text-gray-500">등록된 일정이 없습니다.</p>
           )}
 
           <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -151,20 +151,20 @@ export default function DayDetailModal({
               const rank = rankByProfileId.get(e.profile_id) ?? rankFallback
               const isMine = e.profile_id === profile?.id
               return (
-                <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm">
+                <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-800 px-3 py-2 text-sm">
                   <span className="flex min-w-0 items-center gap-2">
                     <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
                     <span className="truncate">
-                      <span className="font-medium text-gray-800">{rankedName(rank, e.profile_name ?? '')}</span>
-                      {e.note && <span className="text-gray-600">_{e.note}</span>}
+                      <span className="font-medium text-gray-200">{rankedName(rank, e.profile_name ?? '')}</span>
+                      {e.note && <span className="text-gray-300">_{e.note}</span>}
                     </span>
                   </span>
                   {isMine && !editing && (
                     <span className="flex shrink-0 gap-1">
-                      <button onClick={startEdit} className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                      <button onClick={startEdit} className="rounded-full p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={remove} className="rounded-full p-1 text-gray-400 hover:bg-rose-50 hover:text-rose-600">
+                      <button onClick={remove} className="rounded-full p-1 text-gray-500 hover:bg-rose-950 hover:text-rose-400">
                         <Trash2 size={14} />
                       </button>
                     </span>
