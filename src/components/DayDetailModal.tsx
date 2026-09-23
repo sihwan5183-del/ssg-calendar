@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Modal from './Modal'
 import { supabase } from '../lib/supabase'
-import { ENTRY_CATEGORIES, categoryOf, type EntryStatus, type Notice, type ScheduleEntry } from '../lib/types'
+import { rankGroupOf, type Notice, type ScheduleEntry } from '../lib/types'
 import { useAuth } from '../lib/AuthContext'
 import { Video, Trash2, Pencil, Megaphone } from 'lucide-react'
 
@@ -23,23 +23,22 @@ export default function DayDetailModal({
   const { profile, isManager } = useAuth()
   const myEntry = entries.find((e) => e.profile_id === profile?.id)
   const [editing, setEditing] = useState(false)
-  const [status, setStatus] = useState<EntryStatus>(myEntry?.status ?? 'annual')
   const [note, setNote] = useState(myEntry?.note ?? '')
   const [saving, setSaving] = useState(false)
 
   const label = new Date(dateStr).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
 
   const save = async () => {
-    if (!profile) return
+    if (!profile || !note.trim()) return
     setSaving(true)
     if (myEntry) {
-      await supabase.from('schedule_entries').update({ status, note: note || null }).eq('id', myEntry.id)
+      await supabase.from('schedule_entries').update({ note: note.trim() }).eq('id', myEntry.id)
     } else {
       await supabase.from('schedule_entries').insert({
         profile_id: profile.id,
         entry_date: dateStr,
-        status,
-        note: note || null,
+        status: 'other',
+        note: note.trim(),
         created_by: profile.id,
       })
     }
@@ -58,6 +57,7 @@ export default function DayDetailModal({
   }
 
   const others = entries.filter((e) => e.profile_id !== profile?.id)
+  const myRank = rankGroupOf(profile?.position)
 
   return (
     <Modal title={label} onClose={onClose}>
@@ -104,11 +104,8 @@ export default function DayDetailModal({
           </div>
 
           {!editing && myEntry && (
-            <div className={`flex items-center justify-between rounded-xl border p-3 ${categoryOf(myEntry.status).color}`}>
-              <div>
-                <span className="text-sm font-semibold">{categoryOf(myEntry.status).label}</span>
-                {myEntry.note && <p className="mt-0.5 text-xs opacity-80">{myEntry.note}</p>}
-              </div>
+            <div className={`flex items-center justify-between rounded-xl border p-3 ${myRank.color}`}>
+              <p className="text-sm font-medium">{myEntry.note}</p>
               <div className="flex gap-1">
                 <button onClick={() => setEditing(true)} className="rounded-full p-1.5 hover:bg-white/60">
                   <Pencil size={15} />
@@ -125,36 +122,24 @@ export default function DayDetailModal({
               onClick={() => setEditing(true)}
               className="w-full rounded-xl border border-dashed border-gray-300 py-3 text-sm text-gray-500 hover:border-brand-400 hover:text-brand-600"
             >
-              + 내 일정 등록 (휴무·연차·휴가·회의 등)
+              + 내 일정 등록
             </button>
           )}
 
           {editing && (
             <div className="space-y-3 rounded-xl border border-gray-200 p-3">
-              <div className="flex flex-wrap gap-1.5">
-                {ENTRY_CATEGORIES.map((c) => (
-                  <button
-                    key={c.value}
-                    onClick={() => setStatus(c.value)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
-                      status === c.value ? c.color + ' ring-2 ring-offset-1' : 'border-gray-200 text-gray-500'
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-              </div>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="메모 (선택)"
-                rows={2}
+                placeholder="예: 휴무, 연차, 외부감사 회의, 민석 결혼식 등 자유롭게 입력"
+                rows={3}
+                autoFocus
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
               />
               <div className="flex gap-2">
                 <button
                   onClick={save}
-                  disabled={saving}
+                  disabled={saving || !note.trim()}
                   className="flex-1 rounded-lg bg-brand-600 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
                 >
                   저장
@@ -171,14 +156,21 @@ export default function DayDetailModal({
           <div>
             <h3 className="mb-2 text-sm font-medium text-gray-500">다른 직원 일정 ({others.length})</h3>
             <ul className="space-y-1.5">
-              {others.map((e) => (
-                <li key={e.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm">
-                  <span className="font-medium text-gray-800">
-                    {e.profile_name} {e.store_name && <span className="text-xs text-gray-400">· {e.store_name}</span>}
-                  </span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${categoryOf(e.status).color}`}>{categoryOf(e.status).label}</span>
-                </li>
-              ))}
+              {others.map((e) => {
+                const rank = rankGroupOf(e.profile_position)
+                return (
+                  <li key={e.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2 text-sm">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
+                      <span className="shrink-0 font-medium text-gray-800">
+                        {e.profile_name}
+                        {e.store_name && <span className="text-xs font-normal text-gray-400"> · {e.store_name}</span>}
+                      </span>
+                    </span>
+                    <span className="truncate text-right text-gray-600">{e.note}</span>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}
