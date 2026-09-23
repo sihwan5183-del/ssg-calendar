@@ -239,33 +239,33 @@ export default function CalendarPage() {
   )
 
   return (
-    <div className="flex h-screen flex-col bg-gray-950">
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-4 sm:px-6">
+    <div className="flex h-screen flex-col bg-gray-50">
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => setMobileNavOpen(true)} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-800 lg:hidden">
+          <button onClick={() => setMobileNavOpen(true)} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-50 lg:hidden">
             <Menu size={20} />
           </button>
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-white">
             <CalendarDays size={19} />
           </span>
           <div className="hidden sm:block">
-            <p className="text-base font-bold leading-tight text-gray-100">사내 팀 캘린더</p>
-            <p className="text-[11px] leading-tight text-gray-500">함께 만드는 더 좋은 오늘</p>
+            <p className="text-base font-bold leading-tight text-gray-900">사내 팀 캘린더</p>
+            <p className="text-[11px] leading-tight text-gray-400">함께 만드는 더 좋은 오늘</p>
           </div>
         </div>
 
         <div className="relative mx-3 hidden max-w-md flex-1 sm:block">
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="직원 또는 일정 검색"
-            className="w-full rounded-full border border-gray-700 bg-gray-950 py-2 pl-9 pr-3 text-sm text-gray-100 focus:border-brand-400 focus:bg-gray-800 focus:outline-none"
+            className="w-full rounded-full border border-gray-200 bg-gray-50 py-2 pl-9 pr-3 text-sm focus:border-brand-400 focus:bg-white focus:outline-none"
           />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <button onClick={() => setActiveView('notices')} className="relative rounded-full p-2 text-gray-500 hover:bg-gray-800">
+          <button onClick={() => setActiveView('notices')} className="relative rounded-full p-2 text-gray-500 hover:bg-gray-50">
             <Bell size={19} />
             {badgeCount > 0 && (
               <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
@@ -276,27 +276,27 @@ export default function CalendarPage() {
           <div className="relative">
             <button
               onClick={() => setProfileMenuOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 hover:bg-gray-800 sm:pr-2"
+              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 hover:bg-gray-50 sm:pr-2"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/25 text-sm font-semibold text-brand-500">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-sm font-semibold text-brand-700">
                 {profile?.name?.slice(-1) ?? '?'}
               </span>
-              <span className="hidden text-sm font-semibold text-gray-200 sm:inline">{profile?.name}</span>
-              <ChevronDown size={14} className="hidden text-gray-500 sm:inline" />
+              <span className="hidden text-sm font-semibold text-gray-800 sm:inline">{profile?.name}</span>
+              <ChevronDown size={14} className="hidden text-gray-400 sm:inline" />
             </button>
             {profileMenuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setProfileMenuOpen(false)} />
-                <div className="absolute right-0 top-11 z-20 w-48 rounded-xl border border-gray-800 bg-gray-900 p-1.5 shadow-lg">
-                  <p className="px-3 py-1.5 text-xs text-gray-500">{profile?.position ?? profile?.roleCode}</p>
+                <div className="absolute right-0 top-11 z-20 w-48 rounded-xl border border-gray-100 bg-white p-1.5 shadow-lg">
+                  <p className="px-3 py-1.5 text-xs text-gray-400">{profile?.position ?? profile?.roleCode}</p>
                   <button
                     onClick={togglePush}
                     disabled={pushBusy}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-300 hover:bg-gray-800"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
                   >
                     {pushOn ? <Bell size={15} /> : <BellOff size={15} />} 푸시 알림 {pushOn ? '끄기' : '켜기'}
                   </button>
-                  <button onClick={signOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-300 hover:bg-gray-800">
+                  <button onClick={signOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50">
                     <LogOut size={15} /> 로그아웃
                   </button>
                 </div>
@@ -361,22 +361,25 @@ export default function CalendarPage() {
 
         {(activeView === 'all' || activeView === 'mine') && (
           <>
-            <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-              <div className="mb-4 flex items-center justify-center gap-1.5">
-                <button onClick={goPrevMonth} className="rounded-full p-1.5 hover:bg-gray-800">
+            <main className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6">
+              <div className="mb-4 flex shrink-0 items-center justify-center gap-1.5">
+                <button onClick={goPrevMonth} className="rounded-full p-1.5 hover:bg-gray-100">
                   <ChevronLeft size={20} />
                 </button>
-                <h1 className="w-36 text-center text-xl font-bold text-gray-100">{monthLabel}</h1>
-                <button onClick={goNextMonth} className="rounded-full p-1.5 hover:bg-gray-800">
+                <h1 className="w-36 text-center text-xl font-bold text-gray-900">{monthLabel}</h1>
+                <button onClick={goNextMonth} className="rounded-full p-1.5 hover:bg-gray-100">
                   <ChevronRight size={20} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-gray-700 bg-gray-700 text-xs sm:text-sm">
+              <div
+                className="grid min-h-0 flex-1 grid-cols-7 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 text-xs sm:text-sm"
+                style={{ gridTemplateRows: 'auto repeat(6, minmax(84px, 1fr))' }}
+              >
                 {WEEKDAY_LABELS.map((w, i) => (
                   <div
                     key={w}
-                    className={`bg-gray-950 py-2 text-center font-medium ${i === 5 ? 'text-blue-500' : i === 6 ? 'text-red-500' : 'text-gray-500'}`}
+                    className={`bg-gray-50 py-2 text-center font-medium ${i === 5 ? 'text-blue-500' : i === 6 ? 'text-red-500' : 'text-gray-500'}`}
                   >
                     {w}
                   </div>
@@ -409,13 +412,13 @@ export default function CalendarPage() {
                         setSelectedDate(dateStr)
                         setShowDayModal(true)
                       }}
-                      className={`p-1.5 text-left align-top transition hover:bg-brand-500/15 ${
-                        !inMonth ? 'bg-gray-950/60 opacity-40' : isSelected ? 'bg-brand-500/15' : 'bg-gray-900'
+                      className={`h-full p-1.5 text-left align-top transition hover:bg-brand-50 ${
+                        !inMonth ? 'bg-gray-50/60 opacity-40' : isSelected ? 'bg-brand-50' : 'bg-white'
                       }`}
                     >
                       <span
                         className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs sm:text-sm ${
-                          isToday ? 'bg-brand-600 font-semibold text-white' : isSelected ? 'font-bold text-brand-500' : 'text-gray-300'
+                          isToday ? 'bg-brand-600 font-semibold text-white' : isSelected ? 'font-bold text-brand-700' : 'text-gray-700'
                         }`}
                       >
                         {d.getDate()}
@@ -457,7 +460,7 @@ export default function CalendarPage() {
             setSelectedDate(today)
             setShowDayModal(true)
           }}
-          className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-black/40 hover:bg-brand-700 lg:hidden"
+          className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-black/20 hover:bg-brand-700 lg:hidden"
         >
           <Plus size={26} />
         </button>
