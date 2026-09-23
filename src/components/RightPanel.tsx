@@ -42,11 +42,11 @@ export default function RightPanel({
   const important = dayNotices.filter((n) => n.is_important)
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-gray-800 bg-gray-900 p-5">
+    <aside className="flex h-full w-80 shrink-0 flex-col gap-5 overflow-y-auto border-l border-gray-100 bg-white p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-100">{label}</h2>
+        <h2 className="text-lg font-bold text-gray-900">{label}</h2>
         {!isToday && (
-          <button onClick={onGoToday} className="shrink-0 rounded-full border border-gray-700 px-3 py-1 text-xs font-medium text-gray-500 hover:bg-gray-800">
+          <button onClick={onGoToday} className="shrink-0 rounded-full border border-gray-200 px-3 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50">
             오늘로 이동
           </button>
         )}
@@ -54,26 +54,26 @@ export default function RightPanel({
 
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-200">
-            {prefix} 부재 <span className="text-gray-500">({dayEntries.length})</span>
+          <h3 className="text-sm font-semibold text-gray-800">
+            {prefix} 부재 <span className="text-gray-400">({dayEntries.length})</span>
           </h3>
           {dayEntries.length > 0 && (
-            <button onClick={onOpenDetail} className="text-xs font-medium text-brand-500 hover:underline">
+            <button onClick={onOpenDetail} className="text-xs font-medium text-brand-600 hover:underline">
               더보기 &gt;
             </button>
           )}
         </div>
         {dayEntries.length === 0 ? (
-          <p className="rounded-lg bg-gray-950 px-3 py-3 text-xs text-gray-500">등록된 일정이 없습니다.</p>
+          <p className="rounded-lg bg-gray-50 px-3 py-3 text-xs text-gray-400">등록된 일정이 없습니다.</p>
         ) : (
           <ul className="space-y-1.5">
             {dayEntries.slice(0, 5).map((e) => {
               const rank = rankByProfileId.get(e.profile_id) ?? rankFallback
               return (
-                <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-800 px-3 py-2 text-sm">
+                <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm">
                   <span className="flex min-w-0 items-center gap-2">
                     <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
-                    <span className="truncate font-medium text-gray-200">{rankedName(rank, e.profile_name ?? '')}</span>
+                    <span className="truncate font-medium text-gray-800">{rankedName(rank, e.profile_name ?? '')}</span>
                   </span>
                   <span className="truncate text-xs text-gray-500">{e.note}</span>
                 </li>
@@ -85,19 +85,19 @@ export default function RightPanel({
 
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-200">
-            {prefix} 회의 <span className="text-gray-500">({meetings.length})</span>
+          <h3 className="text-sm font-semibold text-gray-800">
+            {prefix} 회의 <span className="text-gray-400">({meetings.length})</span>
           </h3>
           {meetings.length > 0 && (
-            <button onClick={onOpenDetail} className="text-xs font-medium text-brand-500 hover:underline">
+            <button onClick={onOpenDetail} className="text-xs font-medium text-brand-600 hover:underline">
               더보기 &gt;
             </button>
           )}
         </div>
         <div className="space-y-2">
           {meetings.slice(0, 2).map((n) => (
-            <div key={n.id} className="rounded-xl border-l-4 border-violet-500 bg-violet-950/40 p-3">
-              <p className="text-sm font-semibold text-gray-100">{n.title}</p>
+            <div key={n.id} className="rounded-xl border-l-4 border-violet-400 bg-violet-50/60 p-3">
+              <p className="text-sm font-semibold text-gray-900">{n.title}</p>
               <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
                 <Clock size={13} /> {fmtTime(n.meeting_at as string)}
               </p>
@@ -121,25 +121,25 @@ export default function RightPanel({
 
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-200">
-            중요 공지 <span className="text-gray-500">({important.length})</span>
+          <h3 className="text-sm font-semibold text-gray-800">
+            중요 공지 <span className="text-gray-400">({important.length})</span>
           </h3>
           {important.length > 0 && (
-            <button onClick={onOpenDetail} className="text-xs font-medium text-brand-500 hover:underline">
+            <button onClick={onOpenDetail} className="text-xs font-medium text-brand-600 hover:underline">
               더보기 &gt;
             </button>
           )}
         </div>
         <div className="space-y-2">
           {important.slice(0, 2).map((n) => (
-            <div key={n.id} className="flex items-start gap-3 rounded-xl bg-rose-950/50 p-3">
+            <div key={n.id} className="flex items-start gap-3 rounded-xl bg-rose-50 p-3">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-500 text-white">
                 <Megaphone size={15} />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-100">{n.title}</p>
+                <p className="text-sm font-semibold text-gray-900">{n.title}</p>
                 {n.content && <p className="mt-0.5 truncate text-xs text-gray-500">{n.content}</p>}
-                <button onClick={onOpenDetail} className="mt-2 rounded-full bg-gray-900 px-3 py-1 text-[11px] font-medium text-gray-300 shadow-sm hover:bg-gray-800">
+                <button onClick={onOpenDetail} className="mt-2 rounded-full bg-white px-3 py-1 text-[11px] font-medium text-gray-600 shadow-sm hover:bg-gray-50">
                   공지 확인
                 </button>
               </div>
