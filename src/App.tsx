@@ -6,7 +6,7 @@ function Gate() {
   const { loading, session } = useAuth()
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-gray-400">불러오는 중...</div>
+      <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">불러오는 중...</div>
     )
   }
   return session ? <CalendarPage /> : <LoginPage />
