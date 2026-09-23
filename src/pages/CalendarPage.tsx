@@ -36,7 +36,6 @@ export default function CalendarPage() {
   const [roster, setRoster] = useState<Profile[]>([])
   const [rankSettings, setRankSettings] = useState<{ key: string; label: string; color_key: string }[]>([])
   const [rankOverrides, setRankOverrides] = useState<{ profile_id: string; rank_key: string }[]>([])
-  const [filterTeamId, setFilterTeamId] = useState<string>('all')
   const [selectedDate, setSelectedDate] = useState<string>(todayStr())
   const [showDayModal, setShowDayModal] = useState(false)
   const [noticeDate, setNoticeDate] = useState<string | null>(null)
@@ -176,14 +175,13 @@ export default function CalendarPage() {
   const entriesByDate = useMemo(() => {
     const map = new Map<string, ScheduleEntry[]>()
     for (const e of entries) {
-      if (filterTeamId !== 'all' && e.team_id !== filterTeamId) continue
       if (activeView === 'mine' && e.profile_id !== profile?.id) continue
       if (searchQuery && !(e.profile_name ?? '').includes(searchQuery)) continue
       if (!map.has(e.entry_date)) map.set(e.entry_date, [])
       map.get(e.entry_date)!.push(e)
     }
     return map
-  }, [entries, filterTeamId, activeView, profile?.id, searchQuery])
+  }, [entries, activeView, profile?.id, searchQuery])
 
   const noticesForDate = useCallback(
     (dateStr: string) => {
@@ -320,7 +318,13 @@ export default function CalendarPage() {
 
         {activeView === 'members' && (
           <div className="flex-1 overflow-y-auto">
-            <MembersView roster={roster} stores={stores} teams={teams} searchQuery={searchQuery} />
+            <MembersView
+              roster={roster}
+              stores={stores}
+              rankByProfileId={rankByProfileId.map}
+              rankFallback={rankByProfileId.fallback}
+              searchQuery={searchQuery}
+            />
           </div>
         )}
 
@@ -358,30 +362,14 @@ export default function CalendarPage() {
         {(activeView === 'all' || activeView === 'mine') && (
           <>
             <main className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5">
-                  <button onClick={goPrevMonth} className="rounded-full p-1.5 hover:bg-gray-100">
-                    <ChevronLeft size={20} />
-                  </button>
-                  <h1 className="w-36 text-center text-xl font-bold text-gray-900">{monthLabel}</h1>
-                  <button onClick={goNextMonth} className="rounded-full p-1.5 hover:bg-gray-100">
-                    <ChevronRight size={20} />
-                  </button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={filterTeamId}
-                    onChange={(e) => setFilterTeamId(e.target.value)}
-                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-600"
-                  >
-                    <option value="all">전체팀</option>
-                    {teams.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="mb-4 flex items-center justify-center gap-1.5">
+                <button onClick={goPrevMonth} className="rounded-full p-1.5 hover:bg-gray-100">
+                  <ChevronLeft size={20} />
+                </button>
+                <h1 className="w-36 text-center text-xl font-bold text-gray-900">{monthLabel}</h1>
+                <button onClick={goNextMonth} className="rounded-full p-1.5 hover:bg-gray-100">
+                  <ChevronRight size={20} />
+                </button>
               </div>
 
               <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-gray-200 bg-gray-200 text-xs sm:text-sm">
@@ -426,7 +414,7 @@ export default function CalendarPage() {
                       }`}
                     >
                       <span
-                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[11px] sm:text-xs ${
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs sm:text-sm ${
                           isToday ? 'bg-brand-600 font-semibold text-white' : isSelected ? 'font-bold text-brand-700' : 'text-gray-700'
                         }`}
                       >
@@ -434,7 +422,7 @@ export default function CalendarPage() {
                       </span>
                       <div className="mt-1 space-y-0.5">
                         {badges.map((b) => (
-                          <div key={b.key} className={`break-words rounded border px-1 py-0.5 text-[10px] font-medium leading-tight ${b.cls}`}>
+                          <div key={b.key} className={`break-words rounded border px-1.5 py-1 text-xs font-medium leading-snug ${b.cls}`}>
                             {b.label}
                           </div>
                         ))}
