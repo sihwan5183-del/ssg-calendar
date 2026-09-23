@@ -2,7 +2,17 @@ import { useEffect, useMemo, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 import { getMonthGrid, WEEKDAY_LABELS, formatYm, toDateStr, todayStr, fmtTime } from '../lib/dateUtils'
-import { RANK_GROUPS, rankGroupOf, type Notice, type Profile, type ScheduleEntry, type Store, type Team } from '../lib/types'
+import {
+  DEFAULT_RANK_GROUPS,
+  autoRankKey,
+  paletteOf,
+  type Notice,
+  type Profile,
+  type RankInfo,
+  type ScheduleEntry,
+  type Store,
+  type Team,
+} from '../lib/types'
 import DayDetailModal from '../components/DayDetailModal'
 import NoticeModal from '../components/NoticeModal'
 import Sidebar, { type ViewKey } from '../components/Sidebar'
@@ -23,6 +33,8 @@ export default function CalendarPage() {
   const [teams, setTeams] = useState<Team[]>([])
   const [stores, setStores] = useState<Store[]>([])
   const [roster, setRoster] = useState<Profile[]>([])
+  const [rankSettings, setRankSettings] = useState<{ key: string; label: string; color_key: string }[]>([])
+  const [rankOverrides, setRankOverrides] = useState<{ profile_id: string; rank_key: string }[]>([])
   const [filterTeamId, setFilterTeamId] = useState<string>('all')
   const [selectedDate, setSelectedDate] = useState<string>(todayStr())
   const [showDayModal, setShowDayModal] = useState(false)
@@ -71,6 +83,19 @@ export default function CalendarPage() {
     })()
   }, [])
 
+  const loadRankConfig = useCallback(async () => {
+    const [{ data: rs }, { data: ov }] = await Promise.all([
+      supabase.from('rank_settings').select('key, label, color_key'),
+      supabase.from('person_rank_overrides').select('profile_id, rank_key'),
+    ])
+    setRankSettings(rs ?? [])
+    setRankOverrides(ov ?? [])
+  }, [])
+
+  useEffect(() => {
+    loadRankConfig()
+  }, [loadRankConfig])
+
   useEffect(() => {
     if (!isPushSupported()) return
     navigator.serviceWorker.ready.then(async (reg) => {
@@ -80,6 +105,24 @@ export default function CalendarPage() {
   }, [])
 
   const storesById = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores])
+  const rankByProfileId = useMemo(() => {
+    const settingsByKey = new Map(rankSettings.map((r) => [r.key, r]))
+    const overrideByProfile = new Map(rankOverrides.map((o) => [o.profile_id, o.rank_key]))
+    const resolve = (key: string): RankInfo => {
+      const row = settingsByKey.get(key)
+      const def = DEFAULT_RANK_GROUPS.find((g) => g.key === key) ?? DEFAULT_RANK_GROUPS[DEFAULT_RANK_GROUPS.length - 1]
+      const colorKey = row?.color_key ?? def.colorKey
+      const pal = paletteOf(colorKey)
+      return { key: def.key, label: row?.label ?? def.label, colorKey, color: pal.color, dot: pal.dot }
+    }
+    const map = new Map<string, RankInfo>()
+    for (const p of roster) {
+      const key = overrideByProfile.get(p.id) ?? autoRankKey(p.position)
+      map.set(p.id, resolve(key))
+    }
+    return { map, resolve, fallback: resolve('default') }
+  }, [roster, rankSettings, rankOverrides])
+
 
   const loadMonth = useCallback(async () => {
     const [{ data: entryData }, { data: noticeData }] = await Promise.all([
@@ -279,7 +322,16 @@ export default function CalendarPage() {
 
         {activeView === 'admin' && (
           <div className="flex-1 overflow-y-auto">
-            <AdminView entries={entries} notices={notices} roster={roster} monthLabel={monthLabel} onCreateNotice={() => setNoticeDate(today)} />
+            <AdminView
+              entries={entries}
+              notices={notices}
+              roster={roster}
+              monthLabel={monthLabel}
+              onCreateNotice={() => setNoticeDate(today)}
+              rankSettings={rankSettings}
+              rankOverrides={rankOverrides}
+              onRankChanged={loadRankConfig}
+            />
           </div>
         )}
 
@@ -313,11 +365,14 @@ export default function CalendarPage() {
               </div>
 
               <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5">
-                {RANK_GROUPS.map((g) => (
-                  <span key={g.key} className="flex items-center gap-1.5 text-xs text-gray-600">
-                    <span className={`h-2.5 w-2.5 rounded-full ${g.dot}`} /> {g.label}
-                  </span>
-                ))}
+                {DEFAULT_RANK_GROUPS.map((g) => {
+                  const info = rankByProfileId.resolve(g.key)
+                  return (
+                    <span key={g.key} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <span className={`h-2.5 w-2.5 rounded-full ${info.dot}`} /> {info.label}
+                    </span>
+                  )
+                })}
                 <span className="flex items-center gap-1.5 text-xs text-gray-600">
                   <span className="h-2.5 w-2.5 rounded-full bg-violet-500" /> 회의(공지)
                 </span>
@@ -349,7 +404,7 @@ export default function CalendarPage() {
                     ...dayEntries.map((e) => ({
                       key: e.id,
                       label: e.note ? `${e.profile_name} ${e.note}` : e.profile_name ?? '',
-                      cls: rankGroupOf(e.profile_position).color,
+                      cls: (rankByProfileId.map.get(e.profile_id) ?? rankByProfileId.fallback).color,
                     })),
                   ]
 
@@ -386,6 +441,8 @@ export default function CalendarPage() {
 
             <div className="hidden h-full lg:block">
               <RightPanel
+                rankByProfileId={rankByProfileId.map}
+                rankFallback={rankByProfileId.fallback}
                 dateStr={selectedDate}
                 isToday={selectedDate === today}
                 dayEntries={selectedEntries}
@@ -402,6 +459,8 @@ export default function CalendarPage() {
 
       {showDayModal && (
         <DayDetailModal
+          rankByProfileId={rankByProfileId.map}
+          rankFallback={rankByProfileId.fallback}
           dateStr={selectedDate}
           entries={selectedEntries}
           notices={selectedNotices}
