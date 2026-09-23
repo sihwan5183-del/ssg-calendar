@@ -18,6 +18,7 @@ export default function RankSettingsPanel({
 }) {
   const [query, setQuery] = useState('')
   const [savingKey, setSavingKey] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const settingsByKey = new Map(rankSettings.map((r) => [r.key, r]))
   const overrideByProfile = new Map(overrides.map((o) => [o.profile_id, o.rank_key]))
@@ -29,18 +30,21 @@ export default function RankSettingsPanel({
 
   const changeGroupColor = async (key: string, colorKey: string) => {
     setSavingKey(key)
-    await supabase.from('rank_settings').update({ color_key: colorKey }).eq('key', key)
+    setError(null)
+    const { error: err } = await supabase.schema('calendar_app').from('rank_settings').update({ color_key: colorKey }).eq('key', key)
+    if (err) setError(`저장 실패: ${err.message}`)
     setSavingKey(null)
     onChanged()
   }
 
   const changePersonRank = async (profileId: string, rankKey: string) => {
     setSavingKey(profileId)
-    if (rankKey === 'auto') {
-      await supabase.from('person_rank_overrides').delete().eq('profile_id', profileId)
-    } else {
-      await supabase.from('person_rank_overrides').upsert({ profile_id: profileId, rank_key: rankKey })
-    }
+    setError(null)
+    const { error: err } =
+      rankKey === 'auto'
+        ? await supabase.schema('calendar_app').from('person_rank_overrides').delete().eq('profile_id', profileId)
+        : await supabase.schema('calendar_app').from('person_rank_overrides').upsert({ profile_id: profileId, rank_key: rankKey })
+    if (err) setError(`저장 실패: ${err.message}`)
     setSavingKey(null)
     onChanged()
   }
@@ -49,6 +53,7 @@ export default function RankSettingsPanel({
 
   return (
     <div className="space-y-8">
+      {error && <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
       <section>
         <h2 className="mb-1 text-base font-semibold text-gray-900">그룹별 색상</h2>
         <p className="mb-3 text-xs text-gray-400">캘린더에서 이 색으로 표시됩니다. 인사이동으로 그룹 구성이 바뀌어도 색은 그대로 유지돼요.</p>
