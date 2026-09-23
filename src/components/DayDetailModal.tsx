@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { Notice, RankInfo, ScheduleEntry } from '../lib/types'
 import { rankedName } from '../lib/types'
 import { useAuth } from '../lib/AuthContext'
-import { Video, Trash2, Pencil, Megaphone } from 'lucide-react'
+import { Video, Trash2, Pencil, Megaphone, Plus } from 'lucide-react'
 
 export default function DayDetailModal({
   rankByProfileId,
@@ -33,6 +33,11 @@ export default function DayDetailModal({
 
   const label = new Date(dateStr).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })
 
+  const startEdit = () => {
+    setNote(myEntry?.note ?? '')
+    setEditing(true)
+  }
+
   const save = async () => {
     if (!profile || !note.trim()) return
     setSaving(true)
@@ -60,9 +65,6 @@ export default function DayDetailModal({
     setEditing(false)
     onChanged()
   }
-
-  const others = entries.filter((e) => e.profile_id !== profile?.id)
-  const myRank = (profile && rankByProfileId.get(profile.id)) ?? rankFallback
 
   return (
     <Modal title={label} onClose={onClose} size="xl">
@@ -100,39 +102,23 @@ export default function DayDetailModal({
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-500">내 일정</h3>
-            {isManager && (
-              <button onClick={onOpenNotice} className="text-xs font-medium text-brand-600 hover:underline">
-                + 공지 등록
-              </button>
-            )}
+            <h3 className="text-sm font-medium text-gray-500">일정 ({entries.length})</h3>
+            <div className="flex items-center gap-3">
+              {!myEntry && !editing && (
+                <button onClick={startEdit} className="flex items-center gap-1 text-xs font-medium text-brand-600 hover:underline">
+                  <Plus size={13} /> 내 일정 추가
+                </button>
+              )}
+              {isManager && (
+                <button onClick={onOpenNotice} className="text-xs font-medium text-brand-600 hover:underline">
+                  + 공지 등록
+                </button>
+              )}
+            </div>
           </div>
 
-          {!editing && myEntry && (
-            <div className={`flex items-center justify-between rounded-xl border p-3 ${myRank.color}`}>
-              <p className="text-sm font-medium">{myEntry.note}</p>
-              <div className="flex gap-1">
-                <button onClick={() => setEditing(true)} className="rounded-full p-1.5 hover:bg-white/60">
-                  <Pencil size={15} />
-                </button>
-                <button onClick={remove} className="rounded-full p-1.5 hover:bg-white/60">
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {!editing && !myEntry && (
-            <button
-              onClick={() => setEditing(true)}
-              className="w-full rounded-xl border border-dashed border-gray-300 py-3 text-sm text-gray-500 hover:border-brand-400 hover:text-brand-600"
-            >
-              + 내 일정 등록
-            </button>
-          )}
-
           {editing && (
-            <div className="space-y-3 rounded-xl border border-gray-200 p-3">
+            <div className="mb-2 space-y-3 rounded-xl border border-gray-200 p-3">
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -155,30 +141,39 @@ export default function DayDetailModal({
               </div>
             </div>
           )}
-        </div>
 
-        {others.length > 0 && (
-          <div>
-            <h3 className="mb-2 text-sm font-medium text-gray-500">다른 직원 일정 ({others.length})</h3>
-            <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-              {others.map((e) => {
-                const rank = rankByProfileId.get(e.profile_id) ?? rankFallback
-                return (
-                  <li key={e.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2 text-sm">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
-                      <span className="shrink-0 font-medium text-gray-800">
-                        {rankedName(rank, e.profile_name ?? '')}
-                        {e.store_name && <span className="text-xs font-normal text-gray-400"> · {e.store_name}</span>}
-                      </span>
+          {entries.length === 0 && !editing && (
+            <p className="rounded-xl border border-dashed border-gray-300 py-6 text-center text-sm text-gray-400">등록된 일정이 없습니다.</p>
+          )}
+
+          <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            {entries.map((e) => {
+              const rank = rankByProfileId.get(e.profile_id) ?? rankFallback
+              const isMine = e.profile_id === profile?.id
+              return (
+                <li key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2 text-sm">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${rank.dot}`} />
+                    <span className="truncate">
+                      <span className="font-medium text-gray-800">{rankedName(rank, e.profile_name ?? '')}</span>
+                      {e.note && <span className="text-gray-600">_{e.note}</span>}
                     </span>
-                    <span className="truncate text-right text-gray-600">{e.note}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        )}
+                  </span>
+                  {isMine && !editing && (
+                    <span className="flex shrink-0 gap-1">
+                      <button onClick={startEdit} className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={remove} className="rounded-full p-1 text-gray-400 hover:bg-rose-50 hover:text-rose-600">
+                        <Trash2 size={14} />
+                      </button>
+                    </span>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       </div>
     </Modal>
   )
