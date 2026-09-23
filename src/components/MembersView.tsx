@@ -29,7 +29,7 @@ export default function MembersView({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-6">
-      <h1 className="mb-4 text-xl font-bold text-gray-100">구성원 ({filtered.length}명)</h1>
+      <h1 className="mb-4 text-xl font-bold text-gray-900">구성원 ({filtered.length}명)</h1>
       <div className="space-y-6">
         {orderedGroups.map((key) => {
           const members = grouped.get(key)!
@@ -44,13 +44,13 @@ export default function MembersView({
                   const mRank = rankByProfileId.get(m.id) ?? rankFallback
                   const store = m.storeId ? storesById.get(m.storeId) : undefined
                   return (
-                    <div key={m.id} className="flex items-center gap-3 rounded-xl border border-gray-800 p-3">
+                    <div key={m.id} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3">
                       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${mRank.color}`}>
                         {m.name.slice(-1)}
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-gray-100">{rankedName(mRank, m.name)}</p>
-                        <p className="truncate text-xs text-gray-500">{store ? store.pos_name : m.position ?? ''}</p>
+                        <p className="truncate text-sm font-medium text-gray-900">{rankedName(mRank, m.name)}</p>
+                        <p className="truncate text-xs text-gray-400">{store ? store.pos_name : m.position ?? ''}</p>
                       </div>
                     </div>
                   )
@@ -59,7 +59,7 @@ export default function MembersView({
             </div>
           )
         })}
-        {filtered.length === 0 && <p className="py-10 text-center text-sm text-gray-500">검색 결과가 없습니다.</p>}
+        {filtered.length === 0 && <p className="py-10 text-center text-sm text-gray-400">검색 결과가 없습니다.</p>}
       </div>
     </div>
   )
