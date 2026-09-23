@@ -6,6 +6,7 @@ import {
   DEFAULT_RANK_GROUPS,
   autoRankKey,
   paletteOf,
+  rankedName,
   type Notice,
   type Profile,
   type RankInfo,
@@ -401,11 +402,11 @@ export default function CalendarPage() {
                       label: `회의 ${fmtTime(n.meeting_at as string)}`,
                       cls: 'bg-violet-50 text-violet-700 border-violet-300',
                     })),
-                    ...dayEntries.map((e) => ({
-                      key: e.id,
-                      label: e.note ? `${e.profile_name} ${e.note}` : e.profile_name ?? '',
-                      cls: (rankByProfileId.map.get(e.profile_id) ?? rankByProfileId.fallback).color,
-                    })),
+                    ...dayEntries.map((e) => {
+                      const rank = rankByProfileId.map.get(e.profile_id) ?? rankByProfileId.fallback
+                      const who = rankedName(rank, e.profile_name ?? '')
+                      return { key: e.id, label: e.note ? `${who} ${e.note}` : who, cls: rank.color }
+                    }),
                   ]
 
                   return (
