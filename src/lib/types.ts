@@ -39,25 +39,57 @@ export function categoryOf(status: string) {
 }
 
 // 직급(직책)에 따른 색상 구분 — 휴무/연차 등 일정 종류가 아니라 "누구인지"로 색이 정해짐
-// 대표·이사·실장은 한 색으로 묶고, 영업이사·영업팀장·팀장은 각각 다른 색, 그 외 전 직원은 기본색
+// 기본 그룹: 대표·이사·실장은 한 색, 영업이사·영업팀장·팀장은 각각 다른 색, 그 외 전 직원은 기본색
+// 관리자가 색상/직원별 소속 그룹을 조정할 수 있음(calendar_app.rank_settings / person_rank_overrides)
 export type RankGroupKey = 'exec' | 'sales_director' | 'sales_team_lead' | 'team_lead' | 'default'
 
-export const RANK_GROUPS: { key: RankGroupKey; label: string; color: string; dot: string }[] = [
-  { key: 'exec', label: '대표·이사·실장', color: 'bg-slate-100 text-slate-800 border-slate-400', dot: 'bg-slate-700' },
-  { key: 'sales_director', label: '영업이사', color: 'bg-rose-50 text-rose-700 border-rose-300', dot: 'bg-rose-500' },
-  { key: 'sales_team_lead', label: '영업팀장', color: 'bg-orange-50 text-orange-700 border-orange-300', dot: 'bg-orange-500' },
-  { key: 'team_lead', label: '팀장', color: 'bg-teal-50 text-teal-700 border-teal-300', dot: 'bg-teal-500' },
-  { key: 'default', label: '일반 직원', color: 'bg-blue-50 text-blue-700 border-blue-300', dot: 'bg-blue-500' },
+export type RankInfo = { key: RankGroupKey; label: string; colorKey: string; color: string; dot: string }
+
+// 관리자가 고를 수 있는 색상 팔레트 (Tailwind 팔레트 이름 -> 실제 클래스)
+export const RANK_COLOR_PALETTE: { key: string; name: string; color: string; dot: string; swatch: string }[] = [
+  { key: 'slate', name: '슬레이트', color: 'bg-slate-100 text-slate-800 border-slate-400', dot: 'bg-slate-700', swatch: 'bg-slate-600' },
+  { key: 'rose', name: '로즈', color: 'bg-rose-50 text-rose-700 border-rose-300', dot: 'bg-rose-500', swatch: 'bg-rose-500' },
+  { key: 'orange', name: '오렌지', color: 'bg-orange-50 text-orange-700 border-orange-300', dot: 'bg-orange-500', swatch: 'bg-orange-500' },
+  { key: 'amber', name: '앰버', color: 'bg-amber-50 text-amber-800 border-amber-300', dot: 'bg-amber-500', swatch: 'bg-amber-500' },
+  { key: 'teal', name: '틸', color: 'bg-teal-50 text-teal-700 border-teal-300', dot: 'bg-teal-500', swatch: 'bg-teal-500' },
+  { key: 'emerald', name: '에메랄드', color: 'bg-emerald-50 text-emerald-700 border-emerald-300', dot: 'bg-emerald-500', swatch: 'bg-emerald-500' },
+  { key: 'sky', name: '스카이', color: 'bg-sky-50 text-sky-700 border-sky-300', dot: 'bg-sky-500', swatch: 'bg-sky-500' },
+  { key: 'blue', name: '블루', color: 'bg-blue-50 text-blue-700 border-blue-300', dot: 'bg-blue-500', swatch: 'bg-blue-500' },
+  { key: 'violet', name: '바이올렛', color: 'bg-violet-50 text-violet-700 border-violet-300', dot: 'bg-violet-500', swatch: 'bg-violet-500' },
+  { key: 'purple', name: '퍼플', color: 'bg-purple-50 text-purple-700 border-purple-300', dot: 'bg-purple-500', swatch: 'bg-purple-500' },
+  { key: 'pink', name: '핑크', color: 'bg-pink-50 text-pink-700 border-pink-300', dot: 'bg-pink-500', swatch: 'bg-pink-500' },
 ]
 
-export function rankGroupOf(position: string | null | undefined): (typeof RANK_GROUPS)[number] {
+export function paletteOf(colorKey: string) {
+  return RANK_COLOR_PALETTE.find((c) => c.key === colorKey) ?? RANK_COLOR_PALETTE[7]
+}
+
+// 기본값(DB 조회 실패 시 폴백용) — 실제 표시는 rank_settings 테이블 값을 우선 사용
+export const DEFAULT_RANK_GROUPS: { key: RankGroupKey; label: string; colorKey: string }[] = [
+  { key: 'exec', label: '대표·이사·실장', colorKey: 'slate' },
+  { key: 'sales_director', label: '영업이사', colorKey: 'rose' },
+  { key: 'sales_team_lead', label: '영업팀장', colorKey: 'orange' },
+  { key: 'team_lead', label: '팀장', colorKey: 'teal' },
+  { key: 'default', label: '일반 직원', colorKey: 'blue' },
+]
+
+// position 텍스트로 그룹을 자동 추정(관리자가 직접 지정하지 않은 사람의 기본값)
+export function autoRankKey(position: string | null | undefined): RankGroupKey {
   const p = (position ?? '').trim()
-  let key: RankGroupKey = 'default'
-  if (p.includes('영업이사')) key = 'sales_director'
-  else if (p.includes('영업팀장')) key = 'sales_team_lead'
-  else if (p.includes('팀장')) key = 'team_lead'
-  else if (p.includes('대표') || p.includes('대장') || p.includes('이사') || p.includes('실장')) key = 'exec'
-  return RANK_GROUPS.find((g) => g.key === key)!
+  if (p.includes('영업이사')) return 'sales_director'
+  if (p.includes('영업팀장')) return 'sales_team_lead'
+  if (p.includes('팀장')) return 'team_lead'
+  if (p.includes('대표') || p.includes('대장') || p.includes('이사') || p.includes('실장')) return 'exec'
+  return 'default'
+}
+
+export const RANK_GROUPS = DEFAULT_RANK_GROUPS.map((g) => ({ ...g, ...paletteOf(g.colorKey) }))
+
+export function rankGroupOf(position: string | null | undefined): RankInfo {
+  const key = autoRankKey(position)
+  const g = DEFAULT_RANK_GROUPS.find((x) => x.key === key)!
+  const pal = paletteOf(g.colorKey)
+  return { key: g.key, label: g.label, colorKey: g.colorKey, color: pal.color, dot: pal.dot }
 }
 
 export type ScheduleEntry = {
