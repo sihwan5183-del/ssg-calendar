@@ -47,17 +47,17 @@ export type RankInfo = { key: RankGroupKey; label: string; colorKey: string; col
 
 // 관리자가 고를 수 있는 색상 팔레트 (Tailwind 팔레트 이름 -> 실제 클래스)
 export const RANK_COLOR_PALETTE: { key: string; name: string; color: string; dot: string; swatch: string }[] = [
-  { key: 'slate', name: '슬레이트', color: 'bg-slate-700 text-slate-50 border-slate-500', dot: 'bg-slate-400', swatch: 'bg-slate-600' },
-  { key: 'rose', name: '로즈', color: 'bg-rose-700 text-rose-50 border-rose-500', dot: 'bg-rose-400', swatch: 'bg-rose-500' },
-  { key: 'orange', name: '오렌지', color: 'bg-orange-700 text-orange-50 border-orange-500', dot: 'bg-orange-400', swatch: 'bg-orange-500' },
-  { key: 'amber', name: '앰버', color: 'bg-amber-700 text-amber-50 border-amber-500', dot: 'bg-amber-400', swatch: 'bg-amber-500' },
-  { key: 'teal', name: '틸', color: 'bg-teal-700 text-teal-50 border-teal-500', dot: 'bg-teal-400', swatch: 'bg-teal-500' },
-  { key: 'emerald', name: '에메랄드', color: 'bg-emerald-700 text-emerald-50 border-emerald-500', dot: 'bg-emerald-400', swatch: 'bg-emerald-500' },
-  { key: 'sky', name: '스카이', color: 'bg-sky-700 text-sky-50 border-sky-500', dot: 'bg-sky-400', swatch: 'bg-sky-500' },
-  { key: 'blue', name: '블루', color: 'bg-blue-700 text-blue-50 border-blue-500', dot: 'bg-blue-400', swatch: 'bg-blue-500' },
-  { key: 'violet', name: '바이올렛', color: 'bg-violet-700 text-violet-50 border-violet-500', dot: 'bg-violet-400', swatch: 'bg-violet-500' },
-  { key: 'purple', name: '퍼플', color: 'bg-purple-700 text-purple-50 border-purple-500', dot: 'bg-purple-400', swatch: 'bg-purple-500' },
-  { key: 'pink', name: '핑크', color: 'bg-pink-700 text-pink-50 border-pink-500', dot: 'bg-pink-400', swatch: 'bg-pink-500' },
+  { key: 'slate', name: '슬레이트', color: 'bg-slate-100 text-slate-800 border-slate-400', dot: 'bg-slate-700', swatch: 'bg-slate-600' },
+  { key: 'rose', name: '로즈', color: 'bg-rose-50 text-rose-700 border-rose-300', dot: 'bg-rose-500', swatch: 'bg-rose-500' },
+  { key: 'orange', name: '오렌지', color: 'bg-orange-50 text-orange-700 border-orange-300', dot: 'bg-orange-500', swatch: 'bg-orange-500' },
+  { key: 'amber', name: '앰버', color: 'bg-amber-50 text-amber-800 border-amber-300', dot: 'bg-amber-500', swatch: 'bg-amber-500' },
+  { key: 'teal', name: '틸', color: 'bg-teal-50 text-teal-700 border-teal-300', dot: 'bg-teal-500', swatch: 'bg-teal-500' },
+  { key: 'emerald', name: '에메랄드', color: 'bg-emerald-50 text-emerald-700 border-emerald-300', dot: 'bg-emerald-500', swatch: 'bg-emerald-500' },
+  { key: 'sky', name: '스카이', color: 'bg-sky-50 text-sky-700 border-sky-300', dot: 'bg-sky-500', swatch: 'bg-sky-500' },
+  { key: 'blue', name: '블루', color: 'bg-blue-50 text-blue-700 border-blue-300', dot: 'bg-blue-500', swatch: 'bg-blue-500' },
+  { key: 'violet', name: '바이올렛', color: 'bg-violet-50 text-violet-700 border-violet-300', dot: 'bg-violet-500', swatch: 'bg-violet-500' },
+  { key: 'purple', name: '퍼플', color: 'bg-purple-50 text-purple-700 border-purple-300', dot: 'bg-purple-500', swatch: 'bg-purple-500' },
+  { key: 'pink', name: '핑크', color: 'bg-pink-50 text-pink-700 border-pink-300', dot: 'bg-pink-500', swatch: 'bg-pink-500' },
 ]
 
 export function paletteOf(colorKey: string) {
